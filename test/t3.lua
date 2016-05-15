@@ -3,7 +3,7 @@ testeval = test.testeval -- bring into global space
 
 print("### Luaxp functional test -- unary operators")
 
-testeval("-0", "0")
+testeval("-0", "-0")
 testeval("+0", "0")
 testeval("!0", "1")
 testeval("!1", "0")
