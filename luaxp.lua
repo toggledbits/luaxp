@@ -27,7 +27,7 @@ local function pow(b, x)
 	return math.exp(x * math.log(b))
 end
 
-_M.debug = true
+_M.debug = false
 
 local nativeFuncs = {
 	  abs = { nargs = 1, impl = function( argv ) if (argv[1] < 0) then return -argv[1] else return argv[1] end end }
