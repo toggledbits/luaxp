@@ -43,7 +43,37 @@ TO-DO: Link to lexp github repository
 
 ## Grammar ##
 
-TO-DO
+This is a very rough BNF for the parser:
+
+```
+<number> ::= <decimal-integer>
+           | "0x" <hexadecimal-integer>
+           | "0b" <binary-integer>
+           | "0" <octal-integer>
+           | <decimal-rational-number>
+         
+<string> ::= "'" <characters> "'"
+           | '"' <characters> '"'
+           
+<expression> ::= <number>
+               | <string>
+               | <variable-name>
+               | <function-name> "(" <argument-list ")"
+               | <expression> <binary-operator> <expression>
+               | <unary-operator> <expression>
+               | "(" <expression> ")"
+               
+<argument-list> ::= "" | <expression-list>
+                  
+<expression-list> ::= <expression>
+                    | <expression-list> "," <expression>
+                    
+<unary-operator> ::= "-" | "+" | "!"
+
+<binary-operator> ::= "+" | "-" | "*" | "/" | "%"
+                    | "&" | "|" | "^"
+                    | "<" | "<=" | ">" | ">=" | "==" | "=" | "<>" | "!="
+```
 
 ## The Basics ##
 
