@@ -138,15 +138,36 @@ luaxp = require('luaxp')
 
 local context = {}
 context.toradians = function( argv )
-    return args[1] * math.pi / 180
+    return argv[1] * math.pi / 180
 end
 
 print("The cosine of 45 degrees is " .. luaxp.evaluate("cos(toradians(45))", context))
 ```
 
+Notice that we've used an anonymous function here. You could just as easily do this:
+
+```
+-- Define the function
+function toRadians(degrees)
+    return degrees * math.pi / 180
+end
+
+-- Use a function reference in the context
+local context = {}
+context.toradians = toradians
+```
+
 The premise here is simple, if it's not already clean enough. The evaluator will simply look in your passed
-context for any name that it doesn't recognize as one of its functions. If it finds a table element with a 
+context for any name that it doesn't recognize as one of its predefined functions. 
+If it finds a table element with a 
 key equal to the name, the value is assumed to be a function it can call. The function is called with a 
 single argument, a table (as an array) containing all of the arguments that were parsed in the expression.
 There is no limit to the number of arguments. Your function is responsible for sanity-checking the number
 of arguments, their values/type, and supplying defaults if necessary.
+
+If we run our program (which is available as `example1.lua` in the repository), here's the output:
+
+```
+$ lua example1.lua
+The cosine of 45 degrees is 0.70710678118655
+```
