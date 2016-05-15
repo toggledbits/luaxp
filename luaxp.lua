@@ -137,14 +137,15 @@ local function scan_numeric( expr, index )
 		ch = string.sub(expr, index, index)
 		if (ch == 'b' or ch == 'B') then 
 			base = 2
+			index = index + 1
 		elseif (ch == 'x' or ch == 'X') then
 			base = 16
+			index = index + 1
 		elseif (ch == '.') then
 			base = 10 -- going to be a decimal number
 		else
 			base = 8
 		end
-		if (base ~= 8) then index = index + 1 end
 	end
 	if (base <= 0) then base = 10 end
 	-- Now parse the whole part of the number
