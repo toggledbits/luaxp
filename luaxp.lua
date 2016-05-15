@@ -230,7 +230,7 @@ local function scan_fref( expr, index, name )
 				return index, { type=FREF, args=args, name=name }
 			else
 				-- It's part of our argument, so just add it to the subexpress string
-				subexp = subexp + ch
+				subexp = subexp .. ch
 				index = index + 1
 			end
 		elseif (ch == ',' and parenLevel == 1) then -- completed subexpression
@@ -508,8 +508,9 @@ local function _run( ce, ctx, stack )
 			_M._debug("_run: Handling function " .. e.name .. " with " .. table.getn(e.args) .. " arguments passed");
 			-- Parse our arguments and put each on the stack; push them in reverse so they pop correctly (first to pop is first passed)
 			local n, v, v1, argv
+			local argc = table.getn(e.args)
 			argv = {}
-			for n=1,table.getn(e.args) do
+			for n=1,argc do
 				v = e.args[n]
 				_M._debug("_run: evaluate function argument " .. n .. ": " .. _M.dump(v))
 				v1 = _run(v, ctx)
@@ -518,16 +519,20 @@ local function _run( ce, ctx, stack )
 				argv[n] = v1
 			end
 			-- Locate the implementation
-			local fdata = nativeFuncs[e.name]
-			if (fdata == nil and ctx ~= nil and ctx.functions ~= nil) then
-				fdata = ctx.functions[e.name]
+			local impl = nil
+			if (nativeFuncs[e.name] ~= nil) then
+				_M._debug(_M.dump(nativeFuncs[e.name]))
+				impl = nativeFuncs[e.name].impl
+				if (argc < nativeFuncs[e.name].nargs) then _M._debug("Insufficient arguments, need " .. nativeFuncs[e.name].nargs .. ", got " .. argc) return nil end -- Not enough arguments
+			elseif (ctx ~= nil) then
+				impl = ctx[e.name]
 			end
-			if (fdata == nil) then
+			if (impl == nil) then
 				_M._debug("Unrecognized function=" .. e.name)
 				return nil
 			end
 			-- Run the implementation
-			v = fdata.impl(argv)
+			v = impl(argv)
 			_M._debug("_run: finished " .. e.name .. "() call, result=" .. _M.dump(v))
 			table.insert(stack, v)
 		elseif (e.type == VREF) then
