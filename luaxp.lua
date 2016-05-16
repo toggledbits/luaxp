@@ -1,5 +1,4 @@
 ------------------------------------------------------------------------
--- LUAXP version 0.1.0 2016-05-15
 -- LuaXP is a simple expression evaluator for Lua, based on lexp.js, a
 -- lightweight (math) expression parser for JavaScript by the same
 -- author.
@@ -19,7 +18,7 @@ local FREF = 'fref'
 local UNOP = 'unop'
 local BINOP = 'binop'
 
-_M.version = "0.9.1"
+_M.version = "0.9.2 (dev)"
 _M.debug = false
 
 local binops = { 
@@ -120,11 +119,6 @@ _M.dump = function(t)
 		st = st .. tostring(t)
 	end
 	return st
-end
-
-local function error( msg, index )
-	_M._debug(msg .. " at " .. index)
-	return index, nil
 end
 
 -- Skips white space, returns index of non-space character or nil
@@ -231,7 +225,7 @@ local function scan_string( expr, index )
 		st = st .. i
 		index = index + 1
 	end
-	return error("Unterminated string", index)
+	return error("Unterminated string at " .. index, 0)
 end
 
 -- Parse a function reference. It is treated as a degenerate case of 
@@ -245,7 +239,7 @@ local function scan_fref( expr, index, name )
 	local ch
 	local subexp = ""
 	while ( true ) do
-		if ( index > len ) then return error("Unexpected end of argument list", index) end -- unexpected end of argument list
+		if ( index > len ) then return error("Unexpected end of argument list at " .. index, 0) end -- unexpected end of argument list
 		
 		ch = string.sub(expr, index, index)
 		if (ch == ')') then
@@ -268,7 +262,7 @@ local function scan_fref( expr, index, name )
 			_M._debug("scan_fref: handling argument=" .. subexp)
 			if (string.len(subexp) > 0) then 
 				local r = _comp(subexp)
-				if (r == nil) then return error("Subexpression failed to compile", index) end
+				if (r == nil) then return error("Subexpression failed to compile at " .. index, 0) end
 				table.insert(args, r)
 				_M._debug("scan_fref: inserted argument " .. subexp .. " as " .. _M.dump(r))
 			end
@@ -300,7 +294,7 @@ local function scan_vref( expr, index )
 		if (k == nil) then 
 			break 
 		elseif (name == "" and k <= 10) then 
-			return error("Invalid identifier", index) -- Invalid identifier (can't start with digit)
+			return error("Invalid identifier at " .. index, 0) -- Invalid identifier (can't start with digit)
 		end
 		
 		name = name .. ch
@@ -324,7 +318,7 @@ local function scan_expr( expr, index )
 			if (parenLevel == 0) then
 				_M._debug("scan_expr parsing subexpression=" .. st)
 				local r = _comp( st )
-				if (r == nil) then return error("Subexpression failed to parse", index) end
+				if (r == nil) then return error("Subexpression failed to parse at " .. index, 0) end
 				return index+1, r -- pass as single-element sub-expression
 			end
 			parenLevel = parenLevel - 1
@@ -350,7 +344,7 @@ local function scan_unop( expr, index )
 		if (r == nil) then return k, r end
 		return k, { r, { type=UNOP, op=ch } }
 	end
-	return error("Invalid unary operator", index) -- Not a UNOP
+	return index, nil -- Not a UNOP
 end
 
 local function scan_binop( expr, index )
@@ -380,7 +374,7 @@ local function scan_binop( expr, index )
 		if (not matched) then
 			-- Didn't match anything. If we matched nothing on the first character, that's an error.
 			-- Otherwise, op now contains the name of the longest-matching binop in the catalog.
-			if (k == 1) then return error("Invalid operator", index) end
+			if (k == 1) then return error("Invalid operator at " .. st, 0) end
 			break
 		end
 		
@@ -423,7 +417,7 @@ function scan_token( expr, index )
 	if (r ~= nil) then return k, r end
 	
 	--We've got no idea what we're looking at...
-	return error("Invalid token", index)
+	return error("Invalid token at " .. string.sub(expr,index), 0)
 end
 
 local function parse_rpn( lexpr, expr, index, lprec )
@@ -442,7 +436,7 @@ local function parse_rpn( lexpr, expr, index, lprec )
 		-- Fetch right side of expression
 		index,rexpr = scan_token( expr, index )
 		_M._debug("parse_rpn: mid rexpr is " .. _M.dump(rexpr))
-		if (rexpr == nil) then return error("Expected operand", index) end
+		if (rexpr == nil) then return error("Expected operand at " .. string.sub(expr,ilast), 0) end
 		-- Peek at next operator
 		ilast = index -- remember where we were
 		index,lop = scan_binop( expr, index )
@@ -475,7 +469,7 @@ function _comp( expr )
 end
 
 local function _run( ce, ctx, stack )
-	if (ce == nil) then return nil end
+	if (ce == nil) then error("Invalid input for argument 1", 0) end
 	local index = 1
 	local stack = {}
 	local len = table.getn(ce)
@@ -492,9 +486,9 @@ local function _run( ce, ctx, stack )
 		elseif (e.type == BINOP) then
 			_M._debug("_run: handling BINOP " .. e.op)
 			local v2 = table.remove(stack)
-			if (base.type(v2) ~= "number" and e.op ~= "+") then return nil end
+			if (base.type(v2) ~= "number" and e.op ~= "+") then error("Incompatible operand types", 0) end
 			local v1 = table.remove(stack)
-			if (base.type(v1) ~= "number" and e.op ~= "+") then return nil end
+			if (base.type(v1) ~= "number" and e.op ~= "+") then error("Incompatible operand types", 0) end
 			if (e.op == '+') then
 				-- Special case for +, if either operand is a string, treat as concatenation
 				if (base.type(v1) == "string" or base.type(v2) == "string") then
@@ -529,8 +523,7 @@ local function _run( ce, ctx, stack )
 			elseif (e.op == '<>' or e.op == '!=' or e.op == '~=') then
 				if (v1 ~= v2) then v1 = 1 else v1 = 0 end
 			else
-				_M._debug("Unrecognized BINOP=" .. e.op)
-				return nil
+				error("Bug: binop parsed but not implemented by evaluator, binop=" .. e.op, 0)
 			end
 			-- Put our result back on the stack
 			table.insert(stack, v1)
@@ -538,7 +531,7 @@ local function _run( ce, ctx, stack )
 			-- Get the operand
 			_M._debug("_run: handling unop, stack has " .. table.getn(stack))
 			local v = table.remove(stack)
-			if (v == nil) then return nil end
+			if (v == nil) then error("Stack underflow in unop eval", 0) end
 			if (e.op == '-') then
 				v = -v
 			elseif (e.op == '+') then
@@ -546,8 +539,7 @@ local function _run( ce, ctx, stack )
 			elseif (e.op == '!') then 
 				if (v == 0) then v = 1 else v = 0 end
 			else
-				_M._debug("Unrecognized UNOP=" .. e.op)
-				return nil
+				error("Bug: unop parsed but not implemented by evaluator, unop=" .. e.op, 0)
 			end
 			-- Push result back on stack
 			table.insert(stack, v)
@@ -562,7 +554,7 @@ local function _run( ce, ctx, stack )
 				v = e.args[n]
 				_M._debug("_run: evaluate function argument " .. n .. ": " .. _M.dump(v))
 				v1 = _run(v, ctx)
-				if (v1 == nil) then return nil end
+				if (v1 == nil) then error("Evaluation of arg " .. n .. " to function " .. e.name .. " failed: " .. tostring(msg), 0) end
 				_M._debug("_run: adding argument result " .. _M.dump(v1))
 				argv[n] = v1
 			end
@@ -571,28 +563,23 @@ local function _run( ce, ctx, stack )
 			if (nativeFuncs[e.name] ~= nil) then
 				_M._debug(_M.dump(nativeFuncs[e.name]))
 				impl = nativeFuncs[e.name].impl
-				if (argc < nativeFuncs[e.name].nargs) then _M._debug("Insufficient arguments, need " .. nativeFuncs[e.name].nargs .. ", got " .. argc) return nil end -- Not enough arguments
+				if (argc < nativeFuncs[e.name].nargs) then error("Insufficient arguments to " .. e.name .. ", need " .. nativeFuncs[e.name].nargs .. ", got " .. argc, 0) end
 			elseif (ctx ~= nil) then
 				impl = ctx[e.name]
 			end
-			if (impl == nil) then
-				_M._debug("Unrecognized function=" .. e.name)
-				return nil
-			end
+			if (impl == nil) then error("Unrecognized function: " .. e.name, 0) end
 			-- Run the implementation
-			v = impl(argv)
-			_M._debug("_run: finished " .. e.name .. "() call, result=" .. _M.dump(v))
+			local status
+			status, v = pcall(impl, argv)
+			_M._debug("_run: finished " .. e.name .. "() call, status=" .. tostring(status) .. ", result=" .. _M.dump(v))
+			if (not status) then error("Execution of function " .. e.name .. " returned an error: " .. tostring(v), 0) end
 			table.insert(stack, v)
 		elseif (e.type == VREF) then
 			_M._debug("_run: handling vref, name=" .. e.name)
-			if (ctx == nil or ctx[e.name] == nil) then
-				_M._debug("Undefined variable=" .. e.name)
-				return nil
-			end
+			if (ctx == nil or ctx[e.name] == nil) then error("Undefined variable: " .. e.name, 0) end
 			table.insert(stack, ctx[e.name])
 		else
-			_M._debug("Invalid object type=" .. e.type)
-			return nil
+			error("Bug: invalid object type in parse tree: " .. tostring(e.type), 0)
 		end
 		
 		index = index + 1
@@ -608,14 +595,25 @@ end
 
 -- Compile the expression (public method)
 _M.compile = function ( expressionString )
-	return { rpn = _comp(expressionString) }
+	local s,v,n
+	s,v,n = pcall(_comp, expressionString)
+	if (s) then
+		return  { rpn = _comp(expressionString) }
+	else
+		return nil, tostring(v)
+	end
 end
 
 -- Public method to execute compiled expression. Accepts a context (ctx)
 _M.run = function ( compiledExpression, executionContext )
 	executionContext = executionContext or {}
 	if (compiledExpression == nil or compiledExpression.rpn == nil or base.type(compiledExpression.rpn) ~= "table") then return nil end
-	return _run( compiledExpression.rpn, executionContext )
+	local status, val = pcall(_run, compiledExpression.rpn, executionContext)
+	if (status) then 
+		return val
+	else
+		return nil, val
+	end
 end
 
 _M.evaluate = function ( expressionString, executionContext )
