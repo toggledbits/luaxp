@@ -5,7 +5,7 @@
 -- author.
 --
 -- Author: Patrick Rigney <patrick@toggledbits.com>
--- License: GPL 3.0 (see Github/README for details)
+-- License: GPL 3.0 (see Github/LICENSE for details)
 -- Github: 
 ------------------------------------------------------------------------
 local _M = {}
@@ -31,7 +31,7 @@ _M.debug = false
 
 local nativeFuncs = {
 	  abs = { nargs = 1, impl = function( argv ) if (argv[1] < 0) then return -argv[1] else return argv[1] end end }
-	, sgn = { nargs = 1, impl = function( argv ) if (argv[1] < 0) then return -1 elseif (n == 0) then return 0 else return 1 end end }
+	, sgn = { nargs = 1, impl = function( argv ) if (argv[1] < 0) then return -1 elseif (argv[1] == 0) then return 0 elseif (argv[1] == -0) then return -0 else return 1 end end }
 	, floor = { nargs = 1, impl = function( argv ) return math.floor(argv[1]) end }
 	, ceil = { nargs = 1, impl = function( argv ) return math.ceil(argv[1]) end }
 	, round = { nargs = 1, impl = function( argv ) local n = argv[1] local p = argv[2] or 0 return math.floor( n * pow(10, p) + 0.5 ) / pow(10, p) end }
