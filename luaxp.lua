@@ -19,6 +19,7 @@ local FREF = 'fref'
 local UNOP = 'unop'
 local BINOP = 'binop'
 
+_M.version = "0.9"
 _M.debug = true
 
 local binops = { 
