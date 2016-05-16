@@ -21,10 +21,12 @@ TO-DO: Install with LuaRocks
 
 ## Known Issues ##
 
-The following are known issues that are being left as future enhancements:
+As of version 0.9.2, the following are known issues or enhancement that are currently being considered:
 
-* HIGH PRIORITY: Error reporting in the parser and evaluator is about non-existent, limited to writing a message to the console (undesirable) and returning `nil` for most operations. I have a notion about how I want to get it done, but it's not done yet. Job #1 was just getting the port from JavaScript done and functional. [repository issue #2](https://github.com/toggledbits/luaxp/issues/2)
-* Variables defined in the evaluation context can be read by the evaluator, but there is no facility to set variables (i.e. there is not assignment operation/statement). The "=" operator is currently used for equality comparison, but this may change in future and you are advised not to use it for comparisons. [repository issue #3](https://github.com/toggledbits/luaxp/issues/3)
+* Variables defined in the evaluation context can be read by the evaluator, but there is no facility to change
+values or create new variables during expression evaluation (i.e. there is not assignment operation/statement).
+The "=" operator is currently used for equality comparison, but this may change in future and you are advised 
+not to use it for comparisons. [repository issue #3](https://github.com/toggledbits/luaxp/issues/3)
 
 ## Bug Reports and Contributions ##
 
@@ -96,18 +98,26 @@ luaxp = require('luaxp')
 ### compile( expressionString ) ###
 
 The `compile()` function accepts a single argument, the string the containing the expression to be parsed.
-The return value is a table containing the tokenized parser results. This is then used as the argument to 
-`run` to evaluate the expression.
-
-After parsing and before calling run(), it is generally advisable to call getLastError() to see 
-if an error occurred.
+~~The return value is a table containing the tokenized parser results. This is then used as the argument to 
+`run` to evaluate the expression.~~
+If parsing of the expression succeeds, the function returns a table containing the parse tree that is used 
+as input to `run()` later. If parsing fails, the function returns two values: `nil` and a string containing
+the error message.
 
 Example:
 
 ```
 luaxp = require('luaxp')
 
-local r = luaxp.compile( "355 / 113" )
+local r,m
+r,m = luaxp.compile( "355 / 113" )
+if (r == nil) then
+    -- Parsing failed
+    print("Expression parsing failed. Reason: " .. m)
+else
+    -- Parsing succeeded, on the other work...
+	...
+end
 ```
 
 ### run( parsedResult [, executionContext ] ) ###
@@ -122,7 +132,9 @@ Lua `number` or `string` data type. If it fails, a Lua `table` is returned conta
 ```
 luaxp = require('luaxp')
 
-local r = luaxp.compile( "(355/113) - pi" )
+local r,m
+r,m = luaxp.compile( "(355/113) - pi" )
+if (r == nil) error("Parsing failed: " .. m) end
 
 local context = {}
 context.pi = math.pi
