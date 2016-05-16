@@ -23,10 +23,9 @@ TO-DO: Install with LuaRocks
 
 The following are known issues that are being left as future enhancements:
 
-1. Operator precedence. Currently, there is no precedence for operators and evaluation is strictly right to left.
-2. Strings are available, but minimalist, and have no clear purpose.
-3. Variables defined in the evaluation context can be read by the evaluator, but there is no facility to set variables (i.e. there is not assignment operation/statement). The "=" operator is currently used for equality comparison, but this may change in future and you are advised not to use it for comparisons.
-4. HIGH PRIORITY: Error reporting in the parser and evaluator is about non-existent, limited to writing a message to the console (undesirable) and returning `nil` for most operations. I have a notion about how I want to get it done, but it's not done yet. Job #1 was just getting the port from JavaScript done and functional.
+1. Operator precedence. Currently, there is no precedence for operators and evaluation is strictly right to left. [repository issue #1](https://github.com/toggledbits/luaxp/issues/1)
+2. HIGH PRIORITY: Error reporting in the parser and evaluator is about non-existent, limited to writing a message to the console (undesirable) and returning `nil` for most operations. I have a notion about how I want to get it done, but it's not done yet. Job #1 was just getting the port from JavaScript done and functional. [repository issue #2](https://github.com/toggledbits/luaxp/issues/2)
+3. Variables defined in the evaluation context can be read by the evaluator, but there is no facility to set variables (i.e. there is not assignment operation/statement). The "=" operator is currently used for equality comparison, but this may change in future and you are advised not to use it for comparisons. [repository issue #3](https://github.com/toggledbits/luaxp/issues/3)
 
 ## Bug Reports and Contributions ##
 
@@ -50,11 +49,29 @@ as possible.
 
 TO-DO: Link to lexp github repository
 
-## Grammar ##
+## Syntax ##
 
 This is a very rough BNF for the parser:
 
 ```
+<expression> ::= <number>
+               | <string>
+               | <variable-name>
+               | <function-name> "(" <argument-list> ")"
+               | <expression> <binary-operator> <expression>
+               | <unary-operator> <expression>
+               | "(" <expression> ")"
+               
+<argument-list> ::= "" | <expression-list>
+                  
+<expression-list> ::= <expression> [ "," <expression-list> ]
+
+<unary-operator> ::= "-" | "+" | "!"
+
+<binary-operator> ::= "+" | "-" | "*" | "/" | "%"
+                    | "&" | "|" | "^"
+                    | "<" | "<=" | ">" | ">=" | "==" | "=" | "<>" | "!="
+
 <number> ::= <decimal-integer>
            | "0x" <hexadecimal-integer>
            | "0b" <binary-integer>
@@ -64,24 +81,9 @@ This is a very rough BNF for the parser:
 <string> ::= "'" <characters> "'"
            | '"' <characters> '"'
            
-<expression> ::= <number>
-               | <string>
-               | <variable-name>
-               | <function-name> "(" <argument-list ")"
-               | <expression> <binary-operator> <expression>
-               | <unary-operator> <expression>
-               | "(" <expression> ")"
-               
-<argument-list> ::= "" | <expression-list>
-                  
-<expression-list> ::= <expression>
-                    | <expression-list> "," <expression>
-                    
-<unary-operator> ::= "-" | "+" | "!"
+<variable-name> ::= <letter> { <letter> | <digit> | "_" }
 
-<binary-operator> ::= "+" | "-" | "*" | "/" | "%"
-                    | "&" | "|" | "^"
-                    | "<" | "<=" | ">" | ">=" | "==" | "=" | "<>" | "!="
+<function-name> ::= <letter> { <letter> | <digit> | "_" }
 ```
 
 ## The Basics ##
