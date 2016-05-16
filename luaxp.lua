@@ -19,15 +19,34 @@ local FREF = 'fref'
 local UNOP = 'unop'
 local BINOP = 'binop'
 
-local binops = { '+', '-', '*', '/', '%', '&', '|', '^', '<', '<=', '>', '>=', '=', '==', '<>', '!=' }
+_M.debug = true
 
-local reserved = { }
+local binops = { 
+	  { op='*', prec=3 }
+	, { op='/', prec=3 }
+	, { op='%', prec=3 }
+	, { op='+', prec=4 }
+	, { op='-', prec=4 }
+	, { op='<', prec=6 }
+	, { op='<=', prec=6 }
+	, { op='>', prec=-6 }
+	, { op='>=', prec=6 }
+	, { op='==', prec=7 }
+	, { op='<>', prec=7 }
+	, { op='!=', prec=7 }
+	, { op='~=', prec=7 }
+	, { op='&', prec=8 }
+	, { op='^', prec=9 }
+	, { op='|', prec=10 }
+	, { op='=', prec=14 }
+}
+local MAXPREC = 99 -- value doesn't matter as long as it's >= any used in binops
+
+local charmap = { t = "\t", r = "\r", n = "\n" }
 
 local function pow(b, x)
 	return math.exp(x * math.log(b))
 end
-
-_M.debug = false
 
 local nativeFuncs = {
 	  abs = { nargs = 1, impl = function( argv ) if (argv[1] < 0) then return -argv[1] else return argv[1] end end }
@@ -185,6 +204,7 @@ local function scan_numeric( expr, index )
 		val = val * pow(10,npow)
 	end
 	-- Return result
+	_M._debug("scan_numeric returning index=" .. index .. ", val=" .. val)
 	return index, val
 end
 
@@ -192,16 +212,25 @@ end
 local function scan_string( expr, index )
 	_M._debug("scan_string from " .. index .. " in " .. expr)
 	local len = string.len(expr)
-	local start = index
+	local st = ""
 	local i
 	local qchar = string.sub(expr, index, index)
-	i = string.find(expr, qchar, index+1)
-	if (i == nil) then return error("Unterminated string", index) end -- unterminated string
-	if (i == start + 1) then
-		-- zero-length string
-		return i + 1, ""
+	index = index + 1
+	while (index <= len) do
+		i = string.sub(expr, index, index)
+		if (i == '\\' and index < len) then
+			index = index + 1
+			i = string.sub(expr, index, index)
+			if (charmap[i] ~= nil) then i = charmap[i] end
+		elseif (i == qchar) then
+			-- PHR??? Should we do the double char style of quoting? don''t won''t ??
+			index = index + 1
+			return index, st
+		end
+		st = st .. i
+		index = index + 1
 	end
-	return i + 1, string.sub(expr, start+1, i-1)
+	return error("Unterminated string", index)
 end
 
 -- Parse a function reference. It is treated as a degenerate case of 
@@ -328,20 +357,22 @@ local function scan_binop( expr, index )
 	local len = string.len(expr)
 	local matched = false
 	index = skip_white(expr, index)
-	if (index > len) then return error("Expected operator", index) end
+	if (index > len) then return index, nil end
 
 	local op = ""
 	local ch
 	local k = 0
+	local prec
 	while (index <= len) do
 		ch = string.sub(expr,index,index)
 		local st = op .. ch
 		local matched = false
 		k = k + 1
 		for n,f in ipairs(binops) do
-			if (string.sub(f,1,k) == st) then
+			if (string.sub(f.op,1,k) == st) then
 				-- matches something
-				matched = true;
+				matched = true
+				prec = f.prec
 				break;
 			end
 		end
@@ -358,7 +389,7 @@ local function scan_binop( expr, index )
 	end
 
 	_M._debug("scan_binop succeeds with op="..op)
-	return index, { type=BINOP, op=op }
+	return index, { type=BINOP, op=op, prec=prec }
 end
 
 -- Scan our next token (forward-declared)
@@ -394,39 +425,52 @@ function scan_token( expr, index )
 	return error("Invalid token", index)
 end
 
-local function parse_rpn( expr )
-	expr = tostring(expr)
-	_M._debug("Launching parse for " .. expr)
+local function parse_rpn( lexpr, expr, index, lprec )
+	_M._debug("parse_rpn: parsing " .. expr .. " from " .. index .. " prec " .. lprec .. " lhs " .. _M.dump(lexpr))
 	local len = string.len(expr)
-	local index = 1
 	local stack = {}
-	local lexpr
-	
-	index,lexpr = scan_token( expr, index )
-	if (lexpr == nil) then return stack end
-	table.insert(stack, lexpr)
-	
-	while (index <= len) do
-		local binop 
-		index,binop = scan_binop( expr, index )
-		if (binop == nil) then
-			if (index <= len) then return {} end
-			return stack
-		end
-		local rexpr
+	local binop, rexpr, lop, ilast
+
+	ilast = index
+	index,lop = scan_binop( expr, index )
+	_M._debug("parse_rpn: outside lookahead is " .. _M.dump(lop))
+	while (lop ~= nil and lop.prec <= lprec) do
+		-- We're keeping this one
+		binop = lop
+		_M._debug("parse_rpn: mid at " .. index .. " handling " .. _M.dump(binop))
+		-- Fetch right side of expression
 		index,rexpr = scan_token( expr, index )
-		if (rexpr == nil) then error("Invalid right-side expression after operator", index) return {} end
-		table.insert(stack, rexpr)
-		table.insert(stack, binop)
+		_M._debug("parse_rpn: mid rexpr is " .. _M.dump(rexpr))
+		if (rexpr == nil) then return error("Expected operand", index) end
+		-- Peek at next operator
+		ilast = index -- remember where we were
+		index,lop = scan_binop( expr, index )
+		_M._debug("parse_rpn: mid lookahead is " .. _M.dump(lop))
+		while (lop ~= nil and lop.prec < binop.prec) do
+			index, rexpr = parse_rpn( rexpr, expr, ilast, lop.prec )
+			_M._debug("parse_rpn: inside rexpr is " .. _M.dump(rexpr))
+			ilast = index
+			index, lop = scan_binop( expr, index )
+			_M._debug("parse_rpn: inside lookahead is " .. _M.dump(lop))
+		end
+		lexpr = { lexpr, rexpr, binop }
 	end
-	
-	_M._debug("parse_rpn returning " .. _M.dump(stack))
-	return stack
+	_M._debug("parse_rpn: returning index " .. ilast .. " lhs " .. _M.dump(lexpr))
+	return ilast, lexpr
 end
 
--- Completion of forward declaration, wrapper--is it vestigial?
+-- Completion of forward declaration
 function _comp( expr )
-	return parse_rpn(expr)
+	local index = 1
+	local lhs
+	
+	expr = expr or ""
+	expr = tostring(expr)
+	_M._debug("_comp: parse " .. expr)
+	
+	index,lhs = scan_token( expr, index )
+	index,lhs = parse_rpn( lhs, expr, index, MAXPREC )
+	return { lhs }
 end
 
 local function _run( ce, ctx, stack )
@@ -447,7 +491,9 @@ local function _run( ce, ctx, stack )
 		elseif (e.type == BINOP) then
 			_M._debug("_run: handling BINOP " .. e.op)
 			local v2 = table.remove(stack)
+			if (base.type(v2) ~= "number" and e.op ~= "+") then return nil end
 			local v1 = table.remove(stack)
+			if (base.type(v1) ~= "number" and e.op ~= "+") then return nil end
 			if (e.op == '+') then
 				-- Special case for +, if either operand is a string, treat as concatenation
 				if (base.type(v1) == "string" or base.type(v2) == "string") then
