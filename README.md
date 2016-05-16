@@ -19,6 +19,15 @@ free-form test program `try_luaxp.lua`. This lets you enter expressions and see 
 
 TO-DO: Install with LuaRocks
 
+## Known Issues ##
+
+The following are known issues that are being left as future enhancements:
+
+1. Operator precedence. Currently, there is no precedence for operators and evaluation is strictly right to left.
+2. Strings are available, but minimalist, and have no clear purpose.
+3. Variables defined in the evaluation context can be read by the evaluator, but there is no facility to set variables (i.e. there is not assignment operation/statement). The "=" operator is currently used for equality comparison, but this may change in future and you are advised not to use it for comparisons.
+4. HIGH PRIORITY: Error reporting in the parser and evaluator is about non-existent, limited to writing a message to the console (undesirable) and returning `nil` for most operations. I have a notion about how I want to get it done, but it's not done yet. Job #1 was just getting the port from JavaScript done and functional.
+
 ## Bug Reports and Contributions ##
 
 I wrote this library as a port of a similar
