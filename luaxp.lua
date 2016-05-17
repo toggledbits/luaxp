@@ -617,7 +617,9 @@ _M.run = function ( compiledExpression, executionContext )
 end
 
 _M.evaluate = function ( expressionString, executionContext )
-	return _M.run( _M.compile ( expressionString ), executionContext )
+	local r,m = _M.compile( expressionString )
+	if (r == nil) then return r,m end -- return error as we got it
+	return _M.run( r, executionContext ) -- and directly return whatever run() wants to return
 end
 
 -- Return the error message and approximate location of where a parsing error occurred (if used immediately
