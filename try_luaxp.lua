@@ -14,6 +14,7 @@ while (true) do
 	io.write("\nEXP> ")
 	io.flush()
 	s = io.read()
+	if (s == nil) then break end
 	r, m = luaxp.compile(s)
 	if (r == nil) then
 		io.write("Expression parse failed: " .. tostring(m) .. "\n")
