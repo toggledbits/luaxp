@@ -21,10 +21,12 @@ TO-DO: Install with LuaRocks
 
 ## Known Issues ##
 
-The following are known issues that are being left as future enhancements:
+As of version 0.9.2, the following are known issues or enhancement that are currently being considered:
 
-* HIGH PRIORITY: Error reporting in the parser and evaluator is about non-existent, limited to writing a message to the console (undesirable) and returning `nil` for most operations. I have a notion about how I want to get it done, but it's not done yet. Job #1 was just getting the port from JavaScript done and functional. [repository issue #2](https://github.com/toggledbits/luaxp/issues/2)
-* Variables defined in the evaluation context can be read by the evaluator, but there is no facility to set variables (i.e. there is not assignment operation/statement). The "=" operator is currently used for equality comparison, but this may change in future and you are advised not to use it for comparisons. [repository issue #3](https://github.com/toggledbits/luaxp/issues/3)
+* Variables defined in the evaluation context can be read by the evaluator, but there is no facility to change
+values or create new variables during expression evaluation (i.e. there is not assignment operation/statement).
+The "=" operator is currently used for equality comparison, but this may change in future and you are advised 
+not to use it for comparisons. [repository issue #3](https://github.com/toggledbits/luaxp/issues/3)
 
 ## Bug Reports and Contributions ##
 
@@ -80,7 +82,7 @@ This is a very rough BNF for the parser:
 <string> ::= "'" <characters> "'"
            | '"' <characters> '"'
            
-<variable-name> ::= <letter> { <letter> | <digit> | "_" }
+<variable-name> ::= <letter> { <letter> | <digit> | "_" | "." }
 
 <function-name> ::= <letter> { <letter> | <digit> | "_" }
 ```
@@ -96,50 +98,114 @@ luaxp = require('luaxp')
 ### compile( expressionString ) ###
 
 The `compile()` function accepts a single argument, the string the containing the expression to be parsed.
-The return value is a table containing the tokenized parser results. This is then used as the argument to 
-`run` to evaluate the expression.
-
-After parsing and before calling run(), it is generally advisable to call getLastError() to see 
-if an error occurred.
+If parsing of the expression succeeds, the function returns a table containing the parse tree that is used 
+as input to `run()` later. If parsing fails, the function returns two values: `nil` and a string containing
+the error message.
 
 Example:
 
 ```
 luaxp = require('luaxp')
 
-local r = luaxp.compile( "355 / 113" )
+local pr, message
+pr,message = luaxp.compile("abs(355/113-pi)")
+if (pr == nil) then
+    -- Parsing failed
+    print("Expression parsing failed. Reason: " .. message)
+else
+    -- Parsing succeeded, on to other work...
+	...
+end
 ```
 
 ### run( parsedResult [, executionContext ] ) ###
 
-The `run()` function executed the parsed expression. It takes an optional `executionContext` argument, which 
-a table containing variable names and functions.
+The `run()` function executes the parsed expression. It takes an optional `executionContext` argument, which 
+is a table containing variable names and functions.
 
 `run()` returns the result of the expression evaluation. If the evaluation succeeds, this will always be a
-Lua `number` or `string` data type. If it fails, a Lua `table` is returned containing a string at the
-`message` key to tell you what went wrong.
+Lua `number` or `string` data type. If it fails, two values are returned: `nil` and a string containing the
+error message (i.e. same semantics as `compile()`).
 
 ```
 luaxp = require('luaxp')
 
-local r = luaxp.compile( "(355/113) - pi" )
+local pr, message
+pr,message = luaxp.compile("abs(355 / 113 - pi)" )
+if (pr == nil) then error("Parsing failed: " .. message) end
 
-local context = {}
-context.pi = math.pi
+local context = { pi = math.pi }
 
-print("The result of the expression is: " .. luaxp.run( r, context ) )
+print("The result of the expression is: " .. luaxp.run( pr, context ) )
 ```
 
 In the above example, a context is created to define the value of "pi" that is used in the parsed expression.
 This context is then passed to `run()`, which uses it to dereference the value on the fly.
 
-As of this version, Luaxp does not allow you to create or set variables from within the expression.
+As of this version, Luaxp does not allow you to modify variables or create new ones during evaluation.
 
 ### evaluate( expressionString [, executionContext ] ) ###
 
-The `evaluate()` function performs the work of `compile()` and `run()` in one step. There is no
-error-checking between--it simply returns `nil` if the expression cannot be parsed, or there is an
-evaluation-time error.
+The `evaluate()` function performs the work of `compile()` and `run()` in one step. The function result
+is the value of the parsed and evaluated expression, unless a parsing or evaluation error occurs, in which
+case the function will return two values: `nil` and an error message.
+
+```
+luaxp = require('luaxp')
+
+local result, message
+local context = { pi = math.pi }
+result,message = luaxp.evaluate("abs(355/113-pi)", context)
+if (result == nil) then
+    error("Error in evaluation of expression: " .. message)
+else
+	print("The difference between the two approximations of pi is " .. tostring(result))
+end
+```
+
+## User-defined Variables ##
+
+The context passed to `evaluate()` and `run()` is used to define named variables and custom functions
+that can be used in expressions. We've seen in the above examples for these functions how that works.
+For variables, it's simple a matter of defining a table element with the value to be used:
+
+```
+local context
+context.pi = math.pi
+context.minrange = 0
+context.maxrange = 100
+```
+
+These are referred to in expressions simply by their names as defined (case sensitive):
+
+```
+$ lua try_luaxp.lua
+Running with Luaxp version 0.9.2
+Context variables defined:  minrange=0 pi=3.14159265 maxrange=100
+
+EXP> pi
+Expression result: 3.14159265
+
+EXP> (maxrange-minrange)/2
+Expression result: 50
+
+EXP> nonsense
+Expression evaluation failed: Undefined variable: nonsense
+```
+
+Variables can also use dotted notation to traverse a tree of values in the context:
+
+```
+context.device = {}
+context.device.class = "motor"
+context.device.info = { location="MR1-15-C02", specs={ manufacturer="Danfoss", model="EM5-18-184T", frame="T", voltage="460", hp="5" } }
+```
+
+In expressions, the value `device.class` would therefore be *motor*. Referring simply to `device`, however, would return a runtime
+evaluation error.
+
+The second more complex example shows that dotted notation can be used to traverse more deeply-nested structure. In this example,
+one could derive the horsepower of the example motor by referring to `device.info.specs.hp`.
 
 ## Custom Functions ##
 
@@ -184,26 +250,29 @@ end
 print("The cosine of 45 degrees is " .. luaxp.evaluate("cos(toradians(45))", context))
 ```
 
-Notice that we've used an anonymous function here. You could just as easily do this:
+Although we have used an anonymous function in this example, there is no reason you could not separately
+define a named function, and simply use a reference to the function name in the context assignment, like
+this:
 
 ```
--- Define the function
-function toRadians(degrees)
-    return degrees * math.pi / 180
+function toRadians(argv)
+    return argv[1] * math.pi / 180
 end
-
--- Use a function reference in the context
-local context = {}
-context.toradians = toradians
+context.toradians = toRadians
 ```
 
-The premise here is simple, if it's not already clean enough. The evaluator will simply look in your passed
+The premise here is simple, if it's not already clear enough. The evaluator will simply look in your passed
 context for any name that it doesn't recognize as one of its predefined functions. 
 If it finds a table element with a 
 key equal to the name, the value is assumed to be a function it can call. The function is called with a 
 single argument, a table (as an array) containing all of the arguments that were parsed in the expression.
 There is no limit to the number of arguments. Your function is responsible for sanity-checking the number
 of arguments, their values/type, and supplying defaults if necessary.
+
+Note in the above example that we defined our function with an uppercase letter "R" in the name,
+but when we made the context assignment, the context element has all lower case. This means that 
+any expression would also need to use all lower case. The name used in evaluation is the name on
+the context element, not the actual name of the function.
 
 If we run our program (which is available as `example1.lua` in the repository), here's the output:
 

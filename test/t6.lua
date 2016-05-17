@@ -8,7 +8,7 @@ testeval("abs(0)", "0")
 testeval("abs(34)", "34")
 testeval("sgn(-33)", "-1")
 testeval("sgn(0)", "0")
-testeval("sgn(-0)", "-0") -- PR: Need to resolve this ambiguity
+testeval("sgn(-1*0)", "0")
 testeval("sgn(42)", "1")
 testeval("floor(42)", "42")
 testeval("floor(42.4242)", "42")
@@ -67,4 +67,3 @@ testeval("tonumber('177',8)", "127")
 testeval("tonumber('a0',16)", "160")
 
 testeval("time()", "%d+")
-
