@@ -3,10 +3,11 @@ local luaxp = require('luaxp')
 local io = require("io")
 
 local r, s, v, m
+local ctx = { pi = 3.14159265, minrange = 0, maxrange=100 }
 
-local ctx = { pi = 3.14159265, min = "1", max="100" }
+io.write("Running with Luaxp version " .. luaxp._VERSION .. "\n")
 io.write("Context variables defined: ")
-for r,s in pairs(ctx) do io.write(" " .. r .. "=" .. s) end
+for r,s in pairs(ctx) do io.write(" " .. r .. "=" .. tostring(s)) end
 io.write("\n")
 
 while (true) do 

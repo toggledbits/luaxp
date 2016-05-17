@@ -98,8 +98,6 @@ luaxp = require('luaxp')
 ### compile( expressionString ) ###
 
 The `compile()` function accepts a single argument, the string the containing the expression to be parsed.
-~~The return value is a table containing the tokenized parser results. This is then used as the argument to 
-`run` to evaluate the expression.~~
 If parsing of the expression succeeds, the function returns a table containing the parse tree that is used 
 as input to `run()` later. If parsing fails, the function returns two values: `nil` and a string containing
 the error message.
@@ -178,12 +176,29 @@ context.minrange = 0
 context.maxrange = 100
 ```
 
+These are referred to in expressions simply by their names as defined (case sensitive):
+
+```
+$ lua try_luaxp.lua
+Running with Luaxp version 0.9.2
+Context variables defined:  minrange=0 pi=3.14159265 maxrange=100
+
+EXP> pi
+Expression result: 3.14159265
+
+EXP> (maxrange-minrange)/2
+Expression result: 50
+
+EXP> nonsense
+Expression evaluation failed: Undefined variable: nonsense
+```
+
 Variables can also use dotted notation to traverse a tree of values in the context:
 
 ```
 context.device = {}
 context.device.class = "motor"
-context.device['info'] = { status="off", specs={ manufacturer="Danfoss", model="EM5-18-184T", frame="T", voltage="460", hp="5" } }
+context.device.info = { location="MR1-15-C02", specs={ manufacturer="Danfoss", model="EM5-18-184T", frame="T", voltage="460", hp="5" } }
 ```
 
 In expressions, the value `device.class` would therefore be *motor*. Referring simply to `device`, however, would return a runtime
