@@ -82,7 +82,7 @@ This is a very rough BNF for the parser:
 <string> ::= "'" <characters> "'"
            | '"' <characters> '"'
            
-<variable-name> ::= <letter> { <letter> | <digit> | "_" }
+<variable-name> ::= <letter> { <letter> | <digit> | "_" | "." }
 
 <function-name> ::= <letter> { <letter> | <digit> | "_" }
 ```
@@ -164,6 +164,33 @@ else
 	print("The difference between the two approximations of pi is " .. tostring(result))
 end
 ```
+
+## User-defined Variables ##
+
+The context passed to `evaluate()` and `run()` is used to define named variables and custom functions
+that can be used in expressions. We've seen in the above examples for these functions how that works.
+For variables, it's simple a matter of defining a table element with the value to be used:
+
+```
+local context
+context.pi = math.pi
+context.minrange = 0
+context.maxrange = 100
+```
+
+Variables can also use dotted notation to traverse a tree of values in the context:
+
+```
+context.device = {}
+context.device.class = "motor"
+context.device['info'] = { status="off", specs={ manufacturer="Danfoss", model="EM5-18-184T", frame="T", voltage="460", hp="5" } }
+```
+
+In expressions, the value `device.class` would therefore be *motor*. Referring simply to `device`, however, would return a runtime
+evaluation error.
+
+The second more complex example shows that dotted notation can be used to traverse more deeply-nested structure. In this example,
+one could derive the horsepower of the example motor by referring to `device.info.specs.hp`.
 
 ## Custom Functions ##
 
