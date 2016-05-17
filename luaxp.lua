@@ -597,7 +597,9 @@ local function _run( ce, ctx, stack )
 		elseif (e.type == VREF) then
 			_M.debug("_run: handling vref, name=" .. e.name)
 			v = resolve(e.name, ctx)
-			if (v == nil) then error("Undefined variable: " .. e.name, 0) end
+			if (v == nil) then error("Undefined variable: " .. e.name, 0) 
+			elseif (base.type(v) ~= "number" and base.type(v) ~= "string") then error("Invalid variable value type: " .. e.name, 0)
+			end
 		else
 			error("Bug: invalid object type in parse tree: " .. tostring(e.type), 0)
 		end
