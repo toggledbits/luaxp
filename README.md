@@ -28,6 +28,8 @@ values or create new variables during expression evaluation (i.e. there is not a
 The "=" operator is currently used for equality comparison, but this may change in future and you are advised 
 not to use it for comparisons. [repository issue #3](https://github.com/toggledbits/luaxp/issues/3)
 
+* Support for dot notation in variable names to traverse heirarchy of values.
+
 ## Bug Reports and Contributions ##
 
 I wrote this library as a port of a similar
