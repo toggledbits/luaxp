@@ -117,7 +117,7 @@ if (r == nil) then
     -- Parsing failed
     print("Expression parsing failed. Reason: " .. m)
 else
-    -- Parsing succeeded, on the other work...
+    -- Parsing succeeded, on to other work...
 	...
 end
 ```
@@ -136,7 +136,7 @@ luaxp = require('luaxp')
 
 local r,m
 r,m = luaxp.compile( "(355/113) - pi" )
-if (r == nil) error("Parsing failed: " .. m) end
+if (r == nil) then error("Parsing failed: " .. m) end
 
 local context = {}
 context.pi = math.pi
@@ -198,26 +198,28 @@ end
 print("The cosine of 45 degrees is " .. luaxp.evaluate("cos(toradians(45))", context))
 ```
 
-Notice that we've used an anonymous function here. You could just as easily do this:
+Although we have used an anonymous function in this example, there is no reason you could not separately
+define a named function, and simply use a reference to the function name in the context assignment, like
+this:
 
 ```
--- Define the function
-function toRadians(degrees)
-    return degrees * math.pi / 180
+function toRadians(argv)
+    return argv[1] * math.pi / 180
 end
+context.toradians = toRadians
 
--- Use a function reference in the context
-local context = {}
-context.toradians = toradians
-```
-
-The premise here is simple, if it's not already clean enough. The evaluator will simply look in your passed
+The premise here is simple, if it's not already clear enough. The evaluator will simply look in your passed
 context for any name that it doesn't recognize as one of its predefined functions. 
 If it finds a table element with a 
 key equal to the name, the value is assumed to be a function it can call. The function is called with a 
 single argument, a table (as an array) containing all of the arguments that were parsed in the expression.
 There is no limit to the number of arguments. Your function is responsible for sanity-checking the number
 of arguments, their values/type, and supplying defaults if necessary.
+
+Note in the above example that we defined our function with an uppercase letter "R" in the name,
+but when we made the context assignment, the context element has all lower case. This means that 
+any expression would also need to use all lower case. The name used in evaluation is the name on
+the context element, not the actual name of the function.
 
 If we run our program (which is available as `example1.lua` in the repository), here's the output:
 
