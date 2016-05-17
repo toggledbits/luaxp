@@ -111,11 +111,11 @@ Example:
 ```
 luaxp = require('luaxp')
 
-local r,m
-r,m = luaxp.compile( "355 / 113" )
-if (r == nil) then
+local pr, message
+pr,message = luaxp.compile("abs(355/113-pi)")
+if (pr == nil) then
     -- Parsing failed
-    print("Expression parsing failed. Reason: " .. m)
+    print("Expression parsing failed. Reason: " .. message)
 else
     -- Parsing succeeded, on to other work...
 	...
@@ -124,36 +124,48 @@ end
 
 ### run( parsedResult [, executionContext ] ) ###
 
-The `run()` function executed the parsed expression. It takes an optional `executionContext` argument, which 
-a table containing variable names and functions.
+The `run()` function executes the parsed expression. It takes an optional `executionContext` argument, which 
+is a table containing variable names and functions.
 
 `run()` returns the result of the expression evaluation. If the evaluation succeeds, this will always be a
-Lua `number` or `string` data type. If it fails, a Lua `table` is returned containing a string at the
-`message` key to tell you what went wrong.
+Lua `number` or `string` data type. If it fails, two values are returned: `nil` and a string containing the
+error message (i.e. same semantics as `compile()`).
 
 ```
 luaxp = require('luaxp')
 
-local r,m
-r,m = luaxp.compile( "(355/113) - pi" )
-if (r == nil) then error("Parsing failed: " .. m) end
+local pr, message
+pr,message = luaxp.compile("abs(355 / 113 - pi)" )
+if (pr == nil) then error("Parsing failed: " .. message) end
 
-local context = {}
-context.pi = math.pi
+local context = { pi = math.pi }
 
-print("The result of the expression is: " .. luaxp.run( r, context ) )
+print("The result of the expression is: " .. luaxp.run( pr, context ) )
 ```
 
 In the above example, a context is created to define the value of "pi" that is used in the parsed expression.
 This context is then passed to `run()`, which uses it to dereference the value on the fly.
 
-As of this version, Luaxp does not allow you to create or set variables from within the expression.
+As of this version, Luaxp does not allow you to modify variables or create new ones during evaluation.
 
 ### evaluate( expressionString [, executionContext ] ) ###
 
-The `evaluate()` function performs the work of `compile()` and `run()` in one step. There is no
-error-checking between--it simply returns `nil` if the expression cannot be parsed, or there is an
-evaluation-time error.
+The `evaluate()` function performs the work of `compile()` and `run()` in one step. The function result
+is the value of the parsed and evaluated expression, unless a parsing or evaluation error occurs, in which
+case the function will return two values: `nil` and an error message.
+
+```
+luaxp = require('luaxp')
+
+local result, message
+local context = { pi = math.pi }
+result,message = luaxp.evaluate("abs(355/113-pi)", context)
+if (result == nil) then
+    error("Error in evaluation of expression: " .. message)
+else
+	print("The difference between the two approximations of pi is " .. tostring(result))
+end
+```
 
 ## Custom Functions ##
 
