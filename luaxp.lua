@@ -29,7 +29,7 @@ local binops = {
 	, { op='-', prec=4 }
 	, { op='<', prec=6 }
 	, { op='<=', prec=6 }
-	, { op='>', prec=-6 }
+	, { op='>', prec=6 }
 	, { op='>=', prec=6 }
 	, { op='==', prec=7 }
 	, { op='<>', prec=7 }
