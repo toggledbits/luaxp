@@ -3,9 +3,9 @@
 -- lightweight (math) expression parser for JavaScript by the same
 -- author.
 --
--- Author: Patrick Rigney <patrick@toggledbits.com>
--- License: GPL 3.0 (see Github/LICENSE for details)
--- Github: 
+-- Author: Copyright (c) 2016 Patrick Rigney <patrick@toggledbits.com>
+-- License: GPL 3.0 (see https://github.com/toggledbits/luaxp/blob/master/LICENSE)
+-- Github: https://github.com/toggledbits/luaxp
 ------------------------------------------------------------------------
 local _M = {}
 
