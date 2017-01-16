@@ -624,7 +624,7 @@ _M.compile = function ( expressionString )
 	local s,v,n
 	s,v,n = pcall(_comp, expressionString)
 	if (s) then
-		return  { rpn = _comp(expressionString) }
+		return  { rpn = v }
 	else
 		return nil, tostring(v)
 	end
