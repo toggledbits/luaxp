@@ -3,7 +3,10 @@ local luaxp = require('luaxp')
 local io = require("io")
 
 local r, s, v, m
-local ctx = { pi = 3.14159265, minrange = 0, maxrange=100 }
+local ctx = { pi = 3.14159265, minrange = 0, maxrange=100, Device_Num_217={ status="OK", time=140394202, states={ { id="100", value="Hundred" }, { id="290", value="abc" } } } }
+
+ctx.__functions = {}
+ctx.__functions.whiz = function(argv) return string.rep("*",argv[1]) end
 
 io.write("Running with Luaxp version " .. luaxp._VERSION .. "\n")
 io.write("Context variables defined: ")
