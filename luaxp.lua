@@ -76,7 +76,7 @@ local function dump(t, seen)
     return string.format("(%s)%s", typ, tostring(t))
 end
 
--- Debug output function. If _DEBUG is false or nil, no output. 
+-- Debug output function. If _DEBUG is false or nil, no output.
 -- If function, uses that, otherwise print()
 local function D(s, ...)
     if not _M._DEBUG then return end
@@ -161,7 +161,7 @@ local function mapLocaleMonth( m )
         local s = os.date("#%b#%B#", tt):lower()
         if s:find("#"..ml.."#") then
             monthNameMap[ml] = k
-            return k 
+            return k
         end
     end
     return evalerror("Cannot parse month name '" .. m .. "'")
@@ -177,7 +177,7 @@ local function guessMDDM()
     elseif tonumber(p[1]) == 22 then return DMY,p[2]
     else return MDY,p[2] end
 end
-    
+
 -- Somewhat simple time parsing. Handles the most common forms of ISO 8601, plus many less regular forms.
 -- If mm/dd vs dd/mm is ambiguous, it tries to discern using current locale's rule.
 local function xp_parse_time( t )
@@ -192,15 +192,15 @@ local function xp_parse_time( t )
     local order = nil
     local p = { t:match("^%s*(%d+)([/-])(%d+)(.*)") } -- entirely numeric w/sep
     if p[3] == nil then D("match 2") p = { t:match("^%s*(%d+)(%-)(%a+)(.*)") } order=DMY end -- number-word (4-Jul)
-    if p[3] == nil then D("match 3") p = { t:match("^%s*(%a+)(%-)(%d+)(.*)") } order=MDY end -- word-number (Jul-4) 
-    if p[3] ~= nil then 
+    if p[3] == nil then D("match 3") p = { t:match("^%s*(%a+)(%-)(%d+)(.*)") } order=MDY end -- word-number (Jul-4)
+    if p[3] ~= nil then
         -- Look ahead for third component behind same separator
         D("Found p1=%1, p2=%2, sep=%3, rem=%4", p[1], p[2], p[3], p[4])
         local sep = p[2]
         t = p[4] or ""
         D("Scanning for 3rd part from: '%1'", t)
         p[4],p[5] = t:match("^%" .. sep .. "(%d+)(.*)")
-        if p[4] == nil then 
+        if p[4] == nil then
             p[4] = tt.year
         else
             t = p[5] or "" -- advance token
@@ -225,7 +225,7 @@ local function xp_parse_time( t )
                 order = guessMDDM()
             end
             D("MDY order is %1", order)
-            if order == 0 then 
+            if order == 0 then
                 tt.year = p[1] tt.month = mapLocaleMonth(p[3]) tt.day = p[4]
             elseif order == 1 then
                 tt.day = p[1] tt.month = mapLocaleMonth(p[3]) tt.year = p[4]
@@ -268,7 +268,7 @@ local function xp_parse_time( t )
                         t = p[2] or ""
                     end
                 end
-            else 
+            else
                 D("No luck with any known date format.")
             end
         end
@@ -304,7 +304,7 @@ local function xp_parse_time( t )
             t = p[2] or ""
         end
         D("Parsed time is %1:%2:%3", tt.hour, tt['min'], tt.sec)
-        
+
         -- Timezone Zulu?
         p = { t:match("^([zZ])(.*)") } -- no whitespace, see comment below.
         if p[1] ~= nil then
@@ -314,7 +314,7 @@ local function xp_parse_time( t )
             t = p[2] or ""
         end
         -- Handling for zones? UTC, GMT, minimally... what about others... EDT, JST, ...?
-        -- Offset +/-HH[mm] (e.g. +02, -0500). Not that the pattern requires the TZ spec 
+        -- Offset +/-HH[mm] (e.g. +02, -0500). Not that the pattern requires the TZ spec
         -- to follow the time without spaces between, to distinguish TZ from offsets (below).
         p = { t:match("^([+-]%d%d)(.*)") }
         if p[1] ~= nil then
@@ -324,7 +324,7 @@ local function xp_parse_time( t )
             p = { t:match("^:?(%d%d)(.*)") }
             if p[1] ~= nil then
                 if offset < 0 then offset = offset - tonumber(p[1])
-                else offset = offset + tonumber(p[1]) 
+                else offset = offset + tonumber(p[1])
                 end
                 t = p[2] or ""
             end
@@ -338,7 +338,7 @@ local function xp_parse_time( t )
     if p[2] ~= nil then
         D("Parsing offset from %1, first part is %2", t, p[2])
         local sign = p[1]
-        delta = tonumber(p[2]) 
+        delta = tonumber(p[2])
         if delta == nil then evalerror("Invalid delta spec: " .. t) end
         t = p[3] or ""
         local k
@@ -373,7 +373,7 @@ local function xp_parse_time( t )
 end
 
 -- Date add. First arg is timestamp, then secs, mins, hours, days, months, years
-local function xp_date_add( a ) 
+local function xp_date_add( a )
     local tm = xp_parse_time( a[1] )
     if a[2] ~= nil then tm = tm + (tonumber(a[2]) or evalerror("Invalid seconds (argument 2) to dateadd()")) end
     if a[3] ~= nil then tm = tm + 60 * (tonumber(a[3]) or evalerror("Invalid minutes (argument 3) to dateadd()")) end
@@ -420,10 +420,10 @@ end
 
 local function xp_keys( arr )
     if base.type( arr ) ~= "table" then evalerror("Array/table required") end
-    local k 
-    local r = {} 
+    local k
+    local r = {}
     for k,_ in pairs( arr ) do
-        table.insert( r, k ) 
+        table.insert( r, k )
     end
     return r
 end
@@ -574,7 +574,7 @@ local function scan_numeric( expr, index )
             ch = string.sub(expr, index, index)
             if neg == nil and ch == "-" then neg = true
             elseif neg == nil and ch == "+" then neg = false
-            else 
+            else
                 i = string.byte(ch) - 48
                 if i<0 or i>9 then break end
                 npow = npow * 10 + i
@@ -582,7 +582,7 @@ local function scan_numeric( expr, index )
             end
             index = index + 1
         end
-        
+
         if index == st then comperror("Missing exponent", index) end
         if neg then npow = -npow end
         val = val * xp_pow( 10, npow )
@@ -639,7 +639,7 @@ local function scan_fref( expr, index, name )
                 D("scan_fref: handling end of argument list with subexp=%1", subexp)
                 if string.len(subexp) > 0 then -- PHR??? Need to test out all whitespace strings from the likes of "func( )"
                     table.insert(args, _comp( subexp ) ) -- compile the subexp and put it on the list
-                elseif table.getn(args) > 0 then 
+                elseif table.getn(args) > 0 then
                     comperror("Invalid subexpression", index)
                 end
                 index = index + 1
@@ -663,7 +663,7 @@ local function scan_fref( expr, index, name )
                 if (r == nil) then return comperror("Subexpression failed to compile", index) end
                 table.insert( args, r )
                 D("scan_fref: inserted argument %1 as %2", subexp, r)
-            else 
+            else
                 comperror("Invalid subexpression", index)
             end
             index = skip_white( expr, index+1 )
@@ -898,16 +898,16 @@ _comp = function( expr )
 end
 
 -- Better version, checks one or two operands (AND logic result)
-local function check_operand( v1, allow1, v2, allow2 ) 
+local function check_operand( v1, allow1, v2, allow2 )
     local vt = base.type(v1)
     local res = true
     if v2 ~= nil then
         res = check_operand( v2, allow2 or allow1 )
     end
-    if res then 
+    if res then
         if base.type(allow1) == "string" then
             res = (vt == allow1)
-        elseif base.type(allow1) ~= "table" then 
+        elseif base.type(allow1) ~= "table" then
             error("invalid allow1") -- bug, only string and array allowed
         else
             local t
@@ -965,7 +965,7 @@ local function isNumeric(val)
 end
 
 -- Pop an item off the stack. If it's a variable reference, resolve it now.
-local function fetch( stack, ctx ) 
+local function fetch( stack, ctx )
     local v
     local e = table.remove( stack, 1 )
     if e == nil then evalerror("Missing expected operand") end
@@ -1003,7 +1003,7 @@ local function fetch( stack, ctx )
     end
     return e
 end
-    
+
 _run = function( ce, ctx, stack )
     if (ce == nil) then evalerror("Invalid input for argument 1") end
     if stack == nil then stack = {} end
@@ -1069,7 +1069,7 @@ _run = function( ce, ctx, stack )
                 -- If both operands are numbers, bitwise; otherwise boolean
                 if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
                     v = coerce(v1, "boolean") and coerce(v2, "boolean")
-                else    
+                else
                     v = bit.band( coerce(v1, "number"), coerce(v2, "number") )
                 end
             elseif (e.op == '|') then
@@ -1205,7 +1205,7 @@ _run = function( ce, ctx, stack )
             argv.context = ctx -- trickery
             status, v = pcall(impl, argv)
             D("_run: finished %1() call, status=%2, result=%3", e.name, status, v)
-            if not status then 
+            if not status then
                 if base.type(v) == "table" and v.source == "LuaXP" then
                     v.location = e.pos
                     error(v) -- that one of our errors, just pass along
@@ -1270,7 +1270,7 @@ function _M.getLastError( compiledExpression )
     return "some future error message", 0
 end
 
--- Special exports 
+-- Special exports
 _M.dump = dump
 _M.isNull = isNull
 _M.coerce = coerce
