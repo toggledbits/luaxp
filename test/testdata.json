@@ -1,0 +1,2020 @@
+{
+	"full": 1,
+	"temperature": "F",
+	"mode": 1,
+	"sections": [{
+		"name": "My Home",
+		"id": 1
+	}],
+	"rooms": [{
+		"name": "Breakfast Area",
+		"id": 8,
+		"section": 1
+	}, {
+		"name": "Dining Room",
+		"id": 12,
+		"section": 1
+	}, {
+		"name": "Family Room",
+		"id": 11,
+		"section": 1
+	}, {
+		"name": "Foyer",
+		"id": 10,
+		"section": 1
+	}, {
+		"name": "Front Porch",
+		"id": 14,
+		"section": 1
+	}, {
+		"name": "Guest Suite",
+		"id": 15,
+		"section": 1
+	}, {
+		"name": "Gym",
+		"id": 5,
+		"section": 1
+	}, {
+		"name": "Ian's Suite",
+		"id": 16,
+		"section": 1
+	}, {
+		"name": "Jack n Jill Bath",
+		"id": 17,
+		"section": 1
+	}, {
+		"name": "Kitchen",
+		"id": 9,
+		"section": 1
+	}, {
+		"name": "Lab",
+		"id": 1,
+		"section": 1
+	}, {
+		"name": "Laundry",
+		"id": 18,
+		"section": 1
+	}, {
+		"name": "Lounge",
+		"id": 3,
+		"section": 1
+	}, {
+		"name": "Master Bath",
+		"id": 20,
+		"section": 1
+	}, {
+		"name": "Master Bedroom",
+		"id": 19,
+		"section": 1
+	}, {
+		"name": "Media Room",
+		"id": 2,
+		"section": 1
+	}, {
+		"name": "Office",
+		"id": 13,
+		"section": 1
+	}, {
+		"name": "Play Room",
+		"id": 22,
+		"section": 1
+	}, {
+		"name": "Ryan's Room",
+		"id": 21,
+		"section": 1
+	}, {
+		"name": "Terrace Bath",
+		"id": 4,
+		"section": 1
+	}, {
+		"name": "Terrace Office",
+		"id": 6,
+		"section": 1
+	}, {
+		"name": "Terrace Patio",
+		"id": 7,
+		"section": 1
+	}, {
+		"name": "Virtual Devices",
+		"id": 23,
+		"section": 1
+	}],
+	"scenes": [{
+		"active": 0,
+		"name": "All Off",
+		"id": 25,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Cat Box Off",
+		"id": 37,
+		"room": 18
+	}, {
+		"active": 1,
+		"name": "Cat Box On",
+		"id": 36,
+		"room": 18
+	}, {
+		"active": 0,
+		"name": "Ceiling Fans Off",
+		"id": 42,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Go To Basement",
+		"id": 23,
+		"room": 0
+	}, {
+		"active": 1,
+		"name": "Ian Bedroom Off",
+		"id": 24,
+		"room": 16
+	}, {
+		"active": 0,
+		"name": "Indoor Off",
+		"id": 20,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Kitchen All On",
+		"id": 16,
+		"room": 9
+	}, {
+		"active": 1,
+		"name": "Kitchen Off",
+		"id": 15,
+		"room": 9
+	}, {
+		"active": 0,
+		"name": "Kitchen Task",
+		"id": 17,
+		"room": 9
+	}, {
+		"active": 0,
+		"name": "Lounge All",
+		"id": 11,
+		"room": 3
+	}, {
+		"active": 1,
+		"name": "Lounge Off",
+		"id": 10,
+		"room": 3
+	}, {
+		"active": 0,
+		"name": "Main Level Off",
+		"id": 33,
+		"room": 0
+	}, {
+		"active": 1,
+		"name": "Master Bath Off",
+		"id": 21,
+		"room": 20
+	}, {
+		"active": 0,
+		"name": "Master Bedroom Ambient",
+		"id": 31,
+		"room": 19
+	}, {
+		"active": 0,
+		"name": "Master Suite Off",
+		"id": 32,
+		"room": 19
+	}, {
+		"active": 1,
+		"name": "Morning Off",
+		"id": 9,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Outdoor All",
+		"id": 14,
+		"room": 0
+	}, {
+		"active": 1,
+		"name": "Outdoor Off",
+		"id": 13,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Panic On",
+		"id": 1,
+		"room": 0
+	}, {
+		"active": 1,
+		"name": "Reset PLEG Timers",
+		"id": 41,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Ryan Bedroom Off",
+		"id": 43,
+		"room": 21
+	}, {
+		"active": 0,
+		"name": "Set Away",
+		"id": 18,
+		"room": 0
+	}, {
+		"active": 1,
+		"name": "Set Home",
+		"id": 19,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Sunset Off",
+		"id": 7,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Sunset On",
+		"id": 6,
+		"room": 0
+	}, {
+		"active": 1,
+		"name": "Terrace Bath Off",
+		"id": 28,
+		"room": 4
+	}, {
+		"active": 0,
+		"name": "Terrace Level Off",
+		"id": 34,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Terrace Office All",
+		"id": 51,
+		"room": 6
+	}, {
+		"active": 1,
+		"name": "Terrace Office Off",
+		"id": 12,
+		"room": 6
+	}, {
+		"active": 0,
+		"name": "Test1",
+		"id": 52,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Test2",
+		"id": 53,
+		"room": 8
+	}, {
+		"active": 0,
+		"name": "Theater Full",
+		"id": 2,
+		"room": 2
+	}, {
+		"active": 0,
+		"name": "Theater Movie",
+		"id": 5,
+		"room": 2
+	}, {
+		"active": 1,
+		"name": "Theater Off",
+		"id": 3,
+		"room": 2
+	}, {
+		"active": 0,
+		"name": "Theater Partial",
+		"id": 4,
+		"room": 2
+	}, {
+		"active": 0,
+		"name": "Upper Level Off",
+		"id": 35,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Weekday Morning On",
+		"id": 8,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "Xmas Off",
+		"id": 48,
+		"room": 0
+	}, {
+		"active": 1,
+		"name": "Xmas On",
+		"id": 49,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "_do_bridge_scene",
+		"id": 29,
+		"room": 10
+	}, {
+		"active": 0,
+		"name": "_do_entry_scene",
+		"id": 27,
+		"room": 10
+	}, {
+		"active": 0,
+		"name": "_do_lounge_sc",
+		"id": 46,
+		"room": 3
+	}, {
+		"active": 0,
+		"name": "_do_nest_away",
+		"id": 39,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "_do_nest_home",
+		"id": 40,
+		"room": 0
+	}, {
+		"active": 0,
+		"name": "_do_panic_scene",
+		"id": 45,
+		"room": 0
+	}],
+	"devices": [{
+		"name": "6 in 1 Multisensor (humidity)",
+		"altid": "m5",
+		"id": 209,
+		"category": 16,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 206,
+		"humidity": "60"
+	}, {
+		"name": "6 in 1 Multisensor (humidity) 1",
+		"altid": "m5",
+		"id": 229,
+		"category": 16,
+		"subcategory": 0,
+		"room": 16,
+		"parent": 225,
+		"humidity": "54"
+	}, {
+		"name": "6 in 1 Multisensor (light)",
+		"altid": "m3",
+		"id": 208,
+		"category": 18,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 206,
+		"light": "0"
+	}, {
+		"name": "6 in 1 Multisensor (light) 1",
+		"altid": "m3",
+		"id": 228,
+		"category": 18,
+		"subcategory": 0,
+		"room": 16,
+		"parent": 225,
+		"light": "6"
+	}, {
+		"name": "6 in 1 Multisensor (temperature)",
+		"altid": "m1",
+		"id": 207,
+		"category": 17,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 206,
+		"temperature": "74.0"
+	}, {
+		"name": "6 in 1 Multisensor (temperature) 1",
+		"altid": "m1",
+		"id": 226,
+		"category": 17,
+		"subcategory": 0,
+		"room": 16,
+		"parent": 225,
+		"temperature": "75.2"
+	}, {
+		"name": "6 in 1 Multisensor (uv)",
+		"altid": "m27",
+		"id": 210,
+		"category": 28,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 206,
+		"armed": "0",
+		"armedtripped": "0",
+		"light": "0"
+	}, {
+		"name": "6 in 1 Multisensor (uv) 1",
+		"altid": "m27",
+		"id": 227,
+		"category": 28,
+		"subcategory": 0,
+		"room": 16,
+		"parent": 225,
+		"armed": "0",
+		"armedtripped": "0",
+		"light": "0"
+	}, {
+		"name": "Aeon Range Extender",
+		"altid": "103",
+		"id": 212,
+		"category": 11,
+		"subcategory": 2,
+		"room": 12,
+		"parent": 1,
+		"status": "0",
+		"armed": "0",
+		"armedtripped": "0"
+	}, {
+		"name": "Bar Back",
+		"altid": "18",
+		"id": 20,
+		"category": 2,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Bar Sink",
+		"altid": "19",
+		"id": 21,
+		"category": 2,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Bar Top",
+		"altid": "17",
+		"id": 19,
+		"category": 2,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Bottom Stair SC1",
+		"altid": "36",
+		"id": 44,
+		"category": 14,
+		"subcategory": 0,
+		"room": 8,
+		"parent": 1,
+		"commFailure": "0",
+		"status": "0"
+	}, {
+		"name": "Breakfast Chandelier",
+		"altid": "28",
+		"id": 36,
+		"category": 2,
+		"subcategory": 0,
+		"room": 8,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Bridge Recept",
+		"altid": "102",
+		"id": 93,
+		"category": 3,
+		"subcategory": 0,
+		"room": 10,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "Bridge Recessed",
+		"altid": "68",
+		"id": 92,
+		"category": 2,
+		"subcategory": 0,
+		"room": 10,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Cat Box Switch",
+		"altid": "109",
+		"id": 76,
+		"category": 3,
+		"subcategory": 1,
+		"room": 18,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "Ceiling Fan Light",
+		"altid": "38",
+		"id": 47,
+		"category": 2,
+		"subcategory": 0,
+		"room": 11,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Ceiling Fan Motor",
+		"altid": "39",
+		"id": 48,
+		"category": 3,
+		"subcategory": 0,
+		"room": 11,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "Craft Room Lights",
+		"altid": "94",
+		"id": 166,
+		"category": 3,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Deck Flood",
+		"altid": "181",
+		"id": 42,
+		"category": 3,
+		"subcategory": 3,
+		"room": 9,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Deck High Flood",
+		"altid": "58",
+		"id": 81,
+		"category": 3,
+		"subcategory": 0,
+		"room": 19,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Deus Ex Machina II -",
+		"altid": "",
+		"id": 170,
+		"category": 0,
+		"subcategory": -1,
+		"room": 23,
+		"parent": 0,
+		"enabled": "0",
+		"state": "0",
+		"housemodes": "20",
+		"lightsout": "1342",
+		"devices": "36,51=52,47,71=51,63=52,27,70,103,37,164,19,82,90,166,77,79=52,10=53,53,99,95",
+		"status": "0"
+	}, {
+		"name": "Dining Chandelier",
+		"altid": "40",
+		"id": 51,
+		"category": 2,
+		"subcategory": 0,
+		"room": 12,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Dining SC1",
+		"altid": "42",
+		"id": 52,
+		"category": 14,
+		"subcategory": 0,
+		"room": 12,
+		"parent": 1
+	}, {
+		"name": "Event Watcher",
+		"altid": "",
+		"id": 140,
+		"category": 0,
+		"subcategory": -1,
+		"room": 23,
+		"parent": 0
+	}, {
+		"name": "Everspring ST814-2",
+		"altid": "92",
+		"id": 133,
+		"category": 11,
+		"subcategory": 0,
+		"room": 1,
+		"parent": 1,
+		"batterylevel": "80",
+		"temperature": "70.1",
+		"humidity": "59",
+		"lasttrip": "1501217441",
+		"tripped": "0",
+		"armed": "0",
+		"armedtripped": "0"
+	}, {
+		"name": "Far Recessed",
+		"altid": "133",
+		"id": 31,
+		"category": 2,
+		"subcategory": 3,
+		"room": 6,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Foyer Chandelier",
+		"altid": "50",
+		"id": 71,
+		"category": 2,
+		"subcategory": 0,
+		"room": 10,
+		"parent": 1,
+		"status": "0",
+		"level": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Foyer Receptacle",
+		"altid": "101",
+		"id": 45,
+		"category": 3,
+		"subcategory": 0,
+		"room": 10,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "Foyer Window",
+		"altid": "169",
+		"id": 59,
+		"category": 3,
+		"subcategory": 0,
+		"room": 10,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Front Landscape",
+		"altid": "168",
+		"id": 65,
+		"category": 3,
+		"subcategory": 0,
+		"room": 14,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Front Spots",
+		"altid": "6",
+		"id": 7,
+		"category": 2,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Garage Door Sconce",
+		"altid": "194",
+		"id": 168,
+		"category": 3,
+		"subcategory": 3,
+		"room": 8,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Garage Lights",
+		"altid": "27",
+		"id": 35,
+		"category": 3,
+		"subcategory": 0,
+		"room": 8,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Guest Bath Fan",
+		"altid": "46",
+		"id": 61,
+		"category": 3,
+		"subcategory": 0,
+		"room": 15,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Guest Bath Light",
+		"altid": "47",
+		"id": 62,
+		"category": 2,
+		"subcategory": 0,
+		"room": 15,
+		"parent": 1,
+		"status": "0",
+		"level": "0",
+		"commFailure": "0",
+		"armed": "0",
+		"armedtripped": "0"
+	}, {
+		"name": "Guest Bath PLTS",
+		"altid": "",
+		"id": 151,
+		"category": 0,
+		"subcategory": -1,
+		"room": 15,
+		"parent": 0,
+		"iconstate": "0",
+		"status": "0",
+		"state": "0",
+		"armed": "1",
+		"interval": "1800",
+		"interval2": "60",
+		"resetstate": "0",
+		"switchmode": "1",
+		"offcondition": "1501870284",
+		"conditionrepeat": "{}",
+		"objectstatusmap": "{{name = 'Arm', state = nil, seq = 0, oseq = 1462476636.0177},{name = 'Bypass', state = nil, seq = 0, oseq = 1462476636.0179},{name = 'Reset', state = nil, seq = 0, oseq = 1462476636.018},{name = 'Trigger', state = false, seq = 1501868978.5297, oseq = 1501869068.7398},{name = 'Trigger2', state = nil, seq = 0, oseq = 1462476636.0183},{name = 'Restart', state = nil, seq = 0, oseq = 1462476636.0184},{name = 'Restart2', state = nil, seq = 0, oseq = 1462476636.0185},{name = 'On', state = nil, seq = 0, oseq = 1462476636.0187},{name = 'Off', state = nil, seq = 0, oseq = 1462476636.0188},{name = 'fan_on', state = false, seq = 1501862668.7581, oseq = 1501862828.698},{name = 'light_on', state = false, seq = 1501868978.5276, oseq = 1501869068.7377},{name = 'light_hall', state = false, seq = 1500410719.3956, oseq = 1500412053.8276},}",
+		"triggers": "[{'name':'fan_on','device':'61','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_on','device':'62','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_hall','device':'64','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]}]",
+		"actions": "{'Off':[{'delay':0,'actions':[{'device':62,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]},{'device':61,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]},{'device':64,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}]}"
+	}, {
+		"name": "Guest Hall Light",
+		"altid": "208",
+		"id": 64,
+		"category": 3,
+		"subcategory": 3,
+		"room": 15,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Guest Room Light",
+		"altid": "48",
+		"id": 63,
+		"category": 2,
+		"subcategory": 0,
+		"room": 15,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Gym Door Sconces",
+		"altid": "25",
+		"id": 28,
+		"category": 2,
+		"subcategory": 0,
+		"room": 7,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Gym Lights",
+		"altid": "24",
+		"id": 27,
+		"category": 2,
+		"subcategory": 0,
+		"room": 5,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Gym Motion",
+		"altid": "91",
+		"id": 132,
+		"category": 4,
+		"subcategory": 3,
+		"room": 5,
+		"parent": 1,
+		"armedtripped": "0",
+		"lasttrip": "1501602182",
+		"tripped": "0",
+		"armed": "0",
+		"batterylevel": "100",
+		"status": "1"
+	}, {
+		"name": "Gym PLTS",
+		"altid": "",
+		"id": 148,
+		"category": 0,
+		"subcategory": -1,
+		"room": 5,
+		"parent": 0,
+		"iconstate": "0",
+		"status": "0",
+		"state": "0",
+		"armed": "1",
+		"interval": "3600",
+		"interval2": "60",
+		"resetstate": "0",
+		"switchmode": "1",
+		"offcondition": "1501380083",
+		"conditionrepeat": "{'Restart':true}",
+		"objectstatusmap": "{{name = 'Arm', state = nil, seq = 0, oseq = 1462474815.3822},{name = 'Bypass', state = nil, seq = 0, oseq = 1462474815.3824},{name = 'Reset', state = nil, seq = 0, oseq = 1462474815.3825},{name = 'Trigger', state = false, seq = 1501376484.0071, oseq = 1501376487.677},{name = 'Trigger2', state = nil, seq = 0, oseq = 1462474815.3828},{name = 'Restart', state = false, seq = 1501602175.6148, oseq = 1501602182.285},{name = 'Restart2', state = nil, seq = 0, oseq = 1462474815.383},{name = 'On', state = nil, seq = 0, oseq = 1462474815.3832},{name = 'Off', state = nil, seq = 0, oseq = 1462474815.3833},{name = 'light_on', state = false, seq = 1501376484.0057, oseq = 1501376487.6756},{name = 'motion', state = false, seq = 1501602175.6129, oseq = 1501602182.2831},}",
+		"triggers": "[{'name':'light_on','device':'27','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'motion','device':'132','template':'3','service':'urn:micasaverde-com:serviceId:SecuritySensor1','args':[{'name':'Tripped','op':'=','value':'1'}]}]",
+		"actions": "{'Off':[{'delay':0,'actions':[{'device':27,'service':'urn:upnp-org:serviceId:Dimming1','action':'SetLoadLevelTarget','arguments':[{'name':'newLoadlevelTarget','value':'0'}]}]}]}"
+	}, {
+		"name": "Hall Light",
+		"altid": "20",
+		"id": 22,
+		"category": 3,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Headboard",
+		"altid": "202",
+		"id": 77,
+		"category": 3,
+		"subcategory": 0,
+		"room": 19,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "Humidity Control PLG",
+		"altid": "",
+		"id": 407,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 0,
+		"armed": "0",
+		"conditionsatisfied": "None",
+		"conditionrepeat": "{}",
+		"objectstatusmap": "{{name = 'c1', state = true, seq = 1501679778.0069, oseq = 1501599708.1015},{name = 'c2', state = false, seq = 0, oseq = 0},{name = 't1', state = true, seq = 1501679778.0056, oseq = 1501599708.1006},{name = 't2', state = false, seq = 1501634725.0255, oseq = 1501635626.8768},{name = 't3', state = false, seq = 0, oseq = 0},}",
+		"triggers": "[{'device':'147','name':'t1','service':'urn:micasaverde-com:serviceId:HumiditySensor1','template':'1','args':[{'op':'>','name':'CurrentLevel','value':'50'}]},{'device':'147','name':'t2','service':'urn:micasaverde-com:serviceId:HumiditySensor1','template':'2','args':[{'op':'<','name':'CurrentLevel','value':'45'}]},{'device':'144','name':'t3','service':'urn:upnp-org:serviceId:TemperatureSetpoint1_Cool','template':'5','args':[{'op':'<','name':'CurrentSetpoint','value':'68'}]}]",
+		"actions": "{'lua_OutputVariableNames':{},'c1':[{'delay':0,'actions':[{'device':'144','service':'urn:upnp-org:serviceId:HVAC_UserOperatingMode1','action':'SetModeTarget','arguments':[{'name':'NewModeTarget','value':'Cool'}]},{'device':'144','service':'urn:upnp-org:serviceId:TemperatureSetpoint1_Cool','action':'SetCurrentSetpoint','arguments':[{'name':'NewCurrentSetpoint','value':'66'}]}]}],'c2':[{'delay':0,'actions':[{'device':'144','service':'urn:upnp-org:serviceId:TemperatureSetpoint1_Cool','action':'SetCurrentSetpoint','arguments':[{'name':'NewCurrentSetpoint','value':'75'}]}]}]}"
+	}, {
+		"name": "Ian Bath Fan",
+		"altid": "108",
+		"id": 218,
+		"category": 3,
+		"subcategory": 0,
+		"room": 16,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Ian Bath Vanity",
+		"altid": "49",
+		"id": 67,
+		"category": 2,
+		"subcategory": 0,
+		"room": 16,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Ian Bedroom Light",
+		"altid": "153",
+		"id": 70,
+		"category": 2,
+		"subcategory": 3,
+		"room": 16,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Ian Closet Light",
+		"altid": "147",
+		"id": 66,
+		"category": 3,
+		"subcategory": 3,
+		"room": 16,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Ian Shower Light",
+		"altid": "110",
+		"id": 219,
+		"category": 3,
+		"subcategory": 0,
+		"room": 16,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Ian Suite PLEG",
+		"altid": "",
+		"id": 153,
+		"category": 0,
+		"subcategory": -1,
+		"room": 16,
+		"parent": 0,
+		"armed": "1",
+		"conditionsatisfied": "None",
+		"conditionrepeat": "{'bedroom_extend':true}",
+		"objectstatusmap": "{{name = 'fan_timer', state = false, seq = 1501696048.322, oseq = 1501697848.1005},{name = 'closet_timer', state = false, seq = 1500996112.3055, oseq = 1500996712.0242},{name = 'light_bath', state = false, seq = 1501813228.2413, oseq = 1501814728.2383},{name = 'bedroom_start', state = false, seq = 1501873965.2955, oseq = 1501875435.235},{name = 'closet_start', state = false, seq = 1500996112.2335, oseq = 1500996712.3073},{name = 'bath_start', state = false, seq = 1501813228.244, oseq = 1501814728.2404},{name = 'fan_start', state = false, seq = 1501696048.2303, oseq = 1501697848.5286},{name = 'fan_expire', state = true, seq = 1501697848.1158, oseq = 1501696048.3272},{name = 'closet_expire', state = true, seq = 1500996712.0298, oseq = 1500996112.3127},{name = 'bedroom_expire', state = false, seq = 1501871664.0321, oseq = 1501873965.3444},{name = 'bath_expire', state = true, seq = 1501816828.1188, oseq = 1501813228.2924},{name = 'bedroom_extend', state = false, seq = 1501875062.5206, oseq = 1501877885.9564},{name = 'fan_on', state = false, seq = 1501696048.2261, oseq = 1501697848.5244},{name = 'light_vanity', state = false, seq = 1501813228.2396, oseq = 1501814728.2366},{name = 'light_bedroom', state = false, seq = 1501873965.2934, oseq = 1501875435.2328},{name = 'light_closet', state = false, seq = 1500996112.2308, oseq = 1500996712.3046},{name = 'light_shower', state = false, seq = 1501672275.1686, oseq = 1501673775.2388},{name = 'motion', state = false, seq = 1501877661.0433, oseq = 1501877885.9485},{name = 'bath_timer', state = false, seq = 1501813228.2847, oseq = 1501816828.1012},{name = 'bedroom_timer', state = true, seq = 1501875062.5516, oseq = 1501871664.0257},}",
+		"triggers": "[{'name':'fan_on','device':'218','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'op':'=','name':'Status','value':'1'}]},{'name':'light_bedroom','device':'70','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_closet','device':'66','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_shower','device':'219','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'op':'=','name':'Status','value':'1'}]},{'name':'light_vanity','device':'67','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'motion','device':'225','template':'3','service':'urn:micasaverde-com:serviceId:SecuritySensor1','args':[{'name':'Tripped','op':'=','value':'1'}]}]",
+		"schedules": "[['bath_timer','6','','','','1','01:00:00','',''],['bedroom_timer','6','','','','1','01:00:00','',''],['closet_timer','6','','','','1','10:00','',''],['fan_timer','6','','','','1','00:30:00','','']]",
+		"actions": "{'bedroom_start':[{'delay':0,'actions':[{'device':153,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'bedroom_timer'},{'name':'intervalTime','value':''}]}]}],'closet_start':[{'delay':0,'actions':[{'device':153,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'closet_timer'},{'name':'intervalTime','value':''}]}]}],'bath_start':[{'delay':0,'actions':[{'device':153,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'bath_timer'},{'name':'intervalTime','value':''}]}]}],'fan_start':[{'delay':0,'actions':[{'device':153,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'fan_timer'},{'name':'intervalTime','value':''}]}]}],'fan_expire':[{'delay':0,'actions':[{'device':'218','service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'closet_expire':[{'delay':0,'actions':[{'device':66,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'bedroom_expire':[{'delay':0,'actions':[{'device':70,'service':'urn:upnp-org:serviceId:Dimming1','action':'SetLoadLevelTarget','arguments':[{'name':'newLoadlevelTarget','value':'0'}]}]}],'bath_expire':[{'delay':0,'actions':[{'device':'219','service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]},{'device':67,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'bedroom_extend':[{'delay':0,'actions':[{'device':153,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'bedroom_timer'},{'name':'intervalTime','value':''}]}]}],'lua_OutputVariableNames':{}}"
+	}, {
+		"name": "JJ Bath Fan",
+		"altid": "71",
+		"id": 100,
+		"category": 3,
+		"subcategory": 3,
+		"room": 17,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "JJ Bath PLEG",
+		"altid": "",
+		"id": 155,
+		"category": 0,
+		"subcategory": -1,
+		"room": 17,
+		"parent": 0,
+		"armed": "1",
+		"conditionsatisfied": "None",
+		"conditionrepeat": "{}",
+		"objectstatusmap": "{{name = 'vanity_timer', state = false, seq = 1501873905.3397, oseq = 1501877505.1005},{name = 'fan_timer', state = false, seq = 1501807518.2907, oseq = 1501809318.1004},{name = 'shower_timer', state = false, seq = 1501873935.3373, oseq = 1501877535.1016},{name = 'fan_start', state = false, seq = 1501807518.237, oseq = 1501809318.3336},{name = 'fan_expire', state = false, seq = 1501809318.1047, oseq = 1501809318.3365},{name = 'shower_start', state = false, seq = 1501873935.2469, oseq = 1501875405.2372},{name = 'vanity_start', state = false, seq = 1501873905.2768, oseq = 1501875375.2875},{name = 'shower_expire', state = false, seq = 1500945119.108, oseq = 1500945119.3583},{name = 'vanity_expire', state = false, seq = 1501711663.1098, oseq = 1501711663.3746},{name = 'fan_on', state = false, seq = 1501807518.236, oseq = 1501809318.3324},{name = 'light_vanity', state = false, seq = 1501873905.2722, oseq = 1501875375.2827},{name = 'light_shower', state = false, seq = 1501873935.2425, oseq = 1501875405.2327},}",
+		"triggers": "[{'name':'fan_on','device':'100','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_shower','device':'230','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'op':'=','name':'Status','value':'1'}]},{'name':'light_vanity','device':'34','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]}]",
+		"actions": "{'fan_start':[{'delay':0,'actions':[{'device':155,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'fan_timer'},{'name':'intervalTime','value':''}]}]}],'fan_expire':[{'delay':0,'actions':[{'device':100,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'shower_start':[{'delay':0,'actions':[{'device':155,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'shower_timer'},{'name':'intervalTime','value':''}]}]}],'vanity_start':[{'delay':0,'actions':[{'device':155,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'vanity_timer'},{'name':'intervalTime','value':''}]}]}],'shower_expire':[{'delay':0,'actions':[{'device':'230','service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'vanity_expire':[{'delay':0,'actions':[{'device':34,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'lua_OutputVariableNames':{}}",
+		"schedules": "[['fan_timer','6','','',null,'1','30:00','',''],['shower_timer','6','','',null,'1','01:00:00','',''],['vanity_timer','6','','',null,'1','01:00:00','','']]"
+	}, {
+		"name": "JJ Bath Vanity",
+		"altid": "146",
+		"id": 34,
+		"category": 3,
+		"subcategory": 3,
+		"room": 17,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "JJ Shower Light",
+		"altid": "150",
+		"id": 230,
+		"category": 3,
+		"subcategory": 3,
+		"room": 17,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "JJ Vanity Accessory",
+		"altid": "138",
+		"id": 96,
+		"category": 14,
+		"subcategory": 0,
+		"room": 17,
+		"parent": 1,
+		"commFailure": "0",
+		"status": "0"
+	}, {
+		"name": "Kitchen Desk",
+		"altid": "32",
+		"id": 39,
+		"category": 3,
+		"subcategory": 0,
+		"room": 9,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Kitchen Pendants",
+		"altid": "29",
+		"id": 37,
+		"category": 3,
+		"subcategory": 0,
+		"room": 9,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Kitchen Recessed",
+		"altid": "30",
+		"id": 38,
+		"category": 2,
+		"subcategory": 0,
+		"room": 9,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Kitchen Sink Task",
+		"altid": "34",
+		"id": 41,
+		"category": 2,
+		"subcategory": 0,
+		"room": 9,
+		"parent": 1,
+		"status": "0",
+		"level": "0",
+		"armed": "0",
+		"armedtripped": "0"
+	}, {
+		"name": "Kitchen Undercabinet",
+		"altid": "33",
+		"id": 40,
+		"category": 3,
+		"subcategory": 0,
+		"room": 9,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Lamp Plug-in Dim",
+		"altid": "130",
+		"id": 49,
+		"category": 2,
+		"subcategory": 0,
+		"room": 11,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Landscaping",
+		"altid": "7209aece-979d-4263-a6ab-92a3b812d96b",
+		"id": 500,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"enabled": "1",
+		"remaining": "0",
+		"watering": "0",
+		"laststart": "1501873004",
+		"runends": "1501877419",
+		"duration": "74"
+	}, {
+		"name": "Laundry Lights",
+		"altid": "93",
+		"id": 164,
+		"category": 3,
+		"subcategory": 0,
+		"room": 18,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Lounge Chandelier",
+		"altid": "14",
+		"id": 15,
+		"category": 2,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Lounge Door Sconces",
+		"altid": "16",
+		"id": 18,
+		"category": 2,
+		"subcategory": 0,
+		"room": 7,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Lounge Motion",
+		"altid": "89",
+		"id": 130,
+		"category": 4,
+		"subcategory": 3,
+		"room": 3,
+		"parent": 1,
+		"armed": "0",
+		"lasttrip": "1501875009",
+		"tripped": "0",
+		"armedtripped": "0",
+		"batterylevel": "100",
+		"commFailure": "0"
+	}, {
+		"name": "Lounge PLTS",
+		"altid": "",
+		"id": 139,
+		"category": 0,
+		"subcategory": -1,
+		"room": 3,
+		"parent": 0,
+		"iconstate": "0",
+		"status": "0",
+		"state": "0",
+		"armed": "1",
+		"interval": "7200",
+		"interval2": "1800",
+		"resetstate": "0",
+		"switchmode": "1",
+		"offcondition": "1501611656",
+		"conditionrepeat": "{'Restart':true}",
+		"objectstatusmap": "{{name = 'Arm', state = nil, seq = 0, oseq = 1462470715.7694},{name = 'Bypass', state = nil, seq = 0, oseq = 1462470715.7696},{name = 'Reset', state = nil, seq = 0, oseq = 1462470715.7697},{name = 'Trigger', state = false, seq = 1501599829.2418, oseq = 1501604451.7819},{name = 'Trigger2', state = nil, seq = 0, oseq = 1462470715.77},{name = 'Restart', state = false, seq = 1501875003.2146, oseq = 1501875009.9243},{name = 'Restart2', state = nil, seq = 0, oseq = 1462470715.7703},{name = 'On', state = nil, seq = 0, oseq = 1462470715.7705},{name = 'Off', state = nil, seq = 0, oseq = 1462470715.7707},{name = 'motion', state = false, seq = 1501875003.2098, oseq = 1501875009.9195},{name = 'light_bar_back', state = false, seq = 1501446711.6362, oseq = 1501447921.4598},{name = 'light_bar_sink', state = false, seq = 1501446711.7672, oseq = 1501447921.5902},{name = 'light_bar_top', state = false, seq = 1501446711.5063, oseq = 1501447921.31},{name = 'light_chandelier', state = false, seq = 1501446711.3763, oseq = 1501447921.1799},{name = 'light_far', state = false, seq = 1501599844.2377, oseq = 1501604451.778},{name = 'light_near', state = false, seq = 1501599829.2378, oseq = 1501604451.6675},{name = 'light_hall', state = false, seq = 1501446710.986, oseq = 1501447920.7698},{name = 'timer_on', state = '', seq = 1462473811.1153, oseq = 0},}",
+		"triggers": "[{'name':'motion','device':'130','template':'3','service':'urn:micasaverde-com:serviceId:SecuritySensor1','args':[{'name':'Tripped','op':'=','value':'1'}]},{'name':'light_bar_back','device':'20','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_bar_sink','device':'21','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_bar_top','device':'19','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_chandelier','device':'15','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_far','device':'14','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_near','device':'13','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_hall','device':'22','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]}]",
+		"properties": "[['timer_on','139','urn:rts-services-com:serviceId:ProgramLogicTS','On']]",
+		"actions": "{'Off':[{'delay':0,'actions':[{'device':139,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'RunScene','arguments':[{'name':'SceneNameOrNumber','value':'10'}]}]}]}"
+	}, {
+		"name": "Lounge SC7",
+		"altid": "191",
+		"id": 16,
+		"category": 14,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"commFailure": "0"
+	}, {
+		"name": "Main",
+		"altid": "therm.02AA01AC15130083",
+		"id": 142,
+		"category": 5,
+		"subcategory": -1,
+		"room": 8,
+		"parent": 136,
+		"fanmode": "Auto",
+		"fan": "On",
+		"hvacstate": "Cooling",
+		"mode": "CoolOn",
+		"temperature": "72",
+		"setpoint": "72",
+		"heat": "72",
+		"cool": "72",
+		"commands": "hvac_off,hvac_auto,hvac_state,heating_setpoint,cooling_setpoint,hvac_heat,hvac_cool,fan_label,fan_auto,fan_on",
+		"batterylevel": "96"
+	}, {
+		"name": "Main Humidity",
+		"altid": "humid.02AA01AC15130083",
+		"id": 145,
+		"category": 16,
+		"subcategory": -1,
+		"room": 8,
+		"parent": 136,
+		"humidity": "48"
+	}, {
+		"name": "Main Recessed",
+		"altid": "176",
+		"id": 33,
+		"category": 2,
+		"subcategory": 3,
+		"room": 6,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Master Bath PLEG",
+		"altid": "",
+		"id": 149,
+		"category": 0,
+		"subcategory": -1,
+		"room": 20,
+		"parent": 0,
+		"armed": "1",
+		"conditionsatisfied": "None",
+		"conditionrepeat": "{}",
+		"objectstatusmap": "{{name = 'fan_timer', state = false, seq = 1501793063.3266, oseq = 1501794863.1004},{name = 'light_timer', state = false, seq = 1501813343.3075, oseq = 1501816943.1004},{name = 'fan_start', state = false, seq = 1501793063.2351, oseq = 1501795645.3408},{name = 'fan_timer_expire', state = false, seq = 1501794863.1082, oseq = 1501795645.3431},{name = 'light_timer_expire', state = false, seq = 1501332219.1093, oseq = 1501332221.2111},{name = 'light_leds', state = false, seq = 1501255134.1006, oseq = 1501258723.3341},{name = 'light_main', state = false, seq = 1501682345.2382, oseq = 1501685252.1231},{name = 'light_makeup', state = false, seq = 1501809328.8623, oseq = 1501809766.4477},{name = 'light_shower', state = false, seq = 1501682555.2317, oseq = 1501685480.2425},{name = 'light_vanity_l', state = false, seq = 1501727231.2381, oseq = 1501728751.2411},{name = 'light_vanity_r', state = false, seq = 1501813343.2497, oseq = 1501816303.2438},{name = 'light_wc', state = false, seq = 1501791548.2814, oseq = 1501793078.2314},{name = 'fan_on', state = false, seq = 1501793063.2308, oseq = 1501795645.3365},{name = 'main_start', state = false, seq = 1501813343.2726, oseq = 1501816303.2535},{name = 'main_on', state = false, seq = 1501813343.2533, oseq = 1501816303.2475},}",
+		"triggers": "[{'name':'fan_on','device':'89','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_leds','device':'85','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_main','device':'82','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_makeup','device':'87','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_shower','device':'124','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_vanity_l','device':'88','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_vanity_r','device':'86','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_wc','device':'90','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]}]",
+		"schedules": "[['fan_timer','6','','','','1','30:00','',''],['light_timer','6','','',null,'1','60:00','','']]",
+		"actions": "{'fan_start':[{'delay':0,'actions':[{'device':149,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'fan_timer'},{'name':'intervalTime','value':''}]}]}],'fan_timer_expire':[{'delay':0,'actions':[{'device':89,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'light_timer_expire':[{'delay':0,'actions':[{'device':149,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'RunScene','arguments':[{'name':'SceneNameOrNumber','value':'21'}]}]}],'main_on':[{'delay':0,'actions':[]}],'main_start':[{'delay':0,'actions':[{'device':149,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'light_timer'},{'name':'intervalTime','value':''}]}]}],'lua_OutputVariableNames':{}}"
+	}, {
+		"name": "Master Closet",
+		"altid": "215",
+		"id": 165,
+		"category": 3,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "MBR Alcove Recept",
+		"altid": "198",
+		"id": 80,
+		"category": 3,
+		"subcategory": 0,
+		"room": 19,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "MBR Fan Light",
+		"altid": "57",
+		"id": 79,
+		"category": 2,
+		"subcategory": 0,
+		"room": 19,
+		"parent": 1,
+		"status": "0",
+		"level": "0",
+		"commFailure": "0"
+	}, {
+		"name": "MBR Fan Motor",
+		"altid": "56",
+		"id": 78,
+		"category": 3,
+		"subcategory": 0,
+		"room": 19,
+		"parent": 1,
+		"status": "1",
+		"commFailure": "0"
+	}, {
+		"name": "MBR SC4",
+		"altid": "85",
+		"id": 123,
+		"category": 14,
+		"subcategory": 0,
+		"room": 10,
+		"parent": 1,
+		"commFailure": "0"
+	}, {
+		"name": "Mstr Bath Chandelier",
+		"altid": "61",
+		"id": 84,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Mstr Bath LEDs",
+		"altid": "62",
+		"id": 85,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Mstr Bath Main",
+		"altid": "59",
+		"id": 82,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Mstr Bath Makeup",
+		"altid": "64",
+		"id": 87,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Mstr Bath Shower",
+		"altid": "86",
+		"id": 124,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Mstr Bath Vanity L",
+		"altid": "65",
+		"id": 88,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Mstr Bath Vanity R",
+		"altid": "63",
+		"id": 86,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Mstr WC Fan",
+		"altid": "66",
+		"id": 89,
+		"category": 3,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Mstr WC Light",
+		"altid": "67",
+		"id": 90,
+		"category": 2,
+		"subcategory": 0,
+		"room": 20,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Multisensor 6 in 1",
+		"altid": "111",
+		"id": 225,
+		"category": 4,
+		"subcategory": 3,
+		"room": 16,
+		"parent": 1,
+		"armedtripped": "0",
+		"lasttrip": "1501877885",
+		"tripped": "0",
+		"armed": "0",
+		"batterylevel": "100"
+	}, {
+		"name": "Near Recessed",
+		"altid": "177",
+		"id": 32,
+		"category": 2,
+		"subcategory": 3,
+		"room": 6,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Nest",
+		"altid": "",
+		"id": 136,
+		"category": 0,
+		"subcategory": -1,
+		"room": 23,
+		"parent": 0
+	}, {
+		"name": "Office Lamp ELR",
+		"altid": "154",
+		"id": 60,
+		"category": 2,
+		"subcategory": 0,
+		"room": 13,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Office Lamp PHR",
+		"altid": "155",
+		"id": 58,
+		"category": 2,
+		"subcategory": 2,
+		"room": 13,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Office Lights",
+		"altid": "207",
+		"id": 53,
+		"category": 2,
+		"subcategory": 0,
+		"room": 13,
+		"parent": 1,
+		"status": "1",
+		"level": "100"
+	}, {
+		"name": "Pathway",
+		"altid": "10",
+		"id": 11,
+		"category": 2,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Pathway (3-way)",
+		"altid": "37",
+		"id": 46,
+		"category": 3,
+		"subcategory": 0,
+		"room": 11,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Patio Chandeliers",
+		"altid": "15",
+		"id": 17,
+		"category": 2,
+		"subcategory": 0,
+		"room": 7,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Play Room Closet",
+		"altid": "72",
+		"id": 101,
+		"category": 3,
+		"subcategory": 3,
+		"room": 22,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Play Room Fan",
+		"altid": "73",
+		"id": 102,
+		"category": 3,
+		"subcategory": 3,
+		"room": 22,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "Play Room Light",
+		"altid": "70",
+		"id": 99,
+		"category": 2,
+		"subcategory": 3,
+		"room": 22,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Play Room Motion",
+		"altid": "74",
+		"id": 104,
+		"category": 4,
+		"subcategory": 3,
+		"room": 22,
+		"parent": 1,
+		"armedtripped": "0",
+		"lasttrip": "1481590822",
+		"tripped": "0",
+		"armed": "0",
+		"batterylevel": "100",
+		"status": "0"
+	}, {
+		"name": "Plug-in Dimmer 213",
+		"altid": "170",
+		"id": 50,
+		"category": 2,
+		"subcategory": 0,
+		"room": 12,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Porch Fan Light",
+		"altid": "45",
+		"id": 56,
+		"category": 3,
+		"subcategory": 0,
+		"room": 14,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Porch Fan Motor",
+		"altid": "44",
+		"id": 55,
+		"category": 3,
+		"subcategory": 0,
+		"room": 14,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "PTC-CH",
+		"altid": "loc.9e24f620-f629-11e1-b488-123139272b1d",
+		"id": 141,
+		"category": 5,
+		"subcategory": -1,
+		"room": 23,
+		"parent": 136,
+		"status": "1"
+	}, {
+		"name": "Rachio Service",
+		"altid": "",
+		"id": 232,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 0,
+		"serviceCheck": "0",
+		"lastupdate": "1501877841",
+		"raindelay": "0",
+		"commFailure": "0",
+		"message": "Initializing..."
+	}, {
+		"name": "Rachio-C698DE",
+		"altid": "fd2cc39d-ff05-4c9e-bc98-9749e519046d",
+		"id": 491,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"status": "ONLINE",
+		"on": "1",
+		"paused": "0",
+		"raindelay": "1",
+		"message": "Enabled",
+		"remaining": "0",
+		"watering": "0",
+		"raindelaytime": "0"
+	}, {
+		"name": "Reading Left",
+		"altid": "174",
+		"id": 29,
+		"category": 2,
+		"subcategory": 3,
+		"room": 6,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Reading Right",
+		"altid": "26",
+		"id": 30,
+		"category": 2,
+		"subcategory": 3,
+		"room": 6,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Rear Spots",
+		"altid": "5",
+		"id": 6,
+		"category": 2,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Recessed Far",
+		"altid": "13",
+		"id": 14,
+		"category": 2,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Recessed Near",
+		"altid": "12",
+		"id": 13,
+		"category": 2,
+		"subcategory": 0,
+		"room": 3,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Ryan Bedroom Light",
+		"altid": "152",
+		"id": 95,
+		"category": 2,
+		"subcategory": 3,
+		"room": 21,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Ryan Bedroom PLEG",
+		"altid": "",
+		"id": 154,
+		"category": 0,
+		"subcategory": -1,
+		"room": 21,
+		"parent": 0,
+		"armed": "1",
+		"conditionsatisfied": "None",
+		"conditionrepeat": "{}",
+		"objectstatusmap": "{{name = 'bedroom_start', state = false, seq = 1501875421.0343, oseq = 1501876890.2409},{name = 'closet_start', state = false, seq = 1501682480.2432, oseq = 1501683380.5065},{name = 'bedroom_expire', state = false, seq = 1501862508.1027, oseq = 1501872085.3279},{name = 'closet_expire', state = true, seq = 1501683380.0268, oseq = 1501682480.2691},{name = 'light_bedroom', state = false, seq = 1501875421.0331, oseq = 1501876890.2399},{name = 'light_closet', state = false, seq = 1501682480.2417, oseq = 1501683380.505},{name = 'bedroom_timer', state = true, seq = 1501875421.1373, oseq = 1501862508.1005},{name = 'closet_timer', state = false, seq = 1501682480.2662, oseq = 1501683380.0238},}",
+		"triggers": "[{'name':'light_bedroom','device':'95','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_closet','device':'98','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]}]",
+		"schedules": "[['bedroom_timer','6','','','','1','01:00:00','',''],['closet_timer','6','','','','1','00:15:00','','']]",
+		"actions": "{'bedroom_start':[{'delay':0,'actions':[{'device':154,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'bedroom_timer'},{'name':'intervalTime','value':''}]}]}],'closet_start':[{'delay':0,'actions':[{'device':154,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'closet_timer'},{'name':'intervalTime','value':''}]}]}],'bedroom_expire':[{'delay':0,'actions':[{'device':95,'service':'urn:upnp-org:serviceId:Dimming1','action':'SetLoadLevelTarget','arguments':[{'name':'newLoadlevelTarget','value':'0'}]}]}],'closet_expire':[{'delay':0,'actions':[{'device':98,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}],'extend_bedroom':[{'delay':0,'actions':[{'device':154,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'bedroom_timer'},{'name':'intervalTime','value':''}]}]}]}",
+		"properties": "[]"
+	}, {
+		"name": "Ryan Ceiling Fan",
+		"altid": "97",
+		"id": 205,
+		"category": 3,
+		"subcategory": 0,
+		"room": 21,
+		"parent": 1,
+		"status": "1"
+	}, {
+		"name": "Ryan Closet Light",
+		"altid": "69",
+		"id": 98,
+		"category": 3,
+		"subcategory": 0,
+		"room": 21,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Ryan Headboard",
+		"altid": "95",
+		"id": 167,
+		"category": 3,
+		"subcategory": 0,
+		"room": 21,
+		"parent": 1,
+		"status": "1",
+		"commFailure": "0"
+	}, {
+		"name": "Sconces Left",
+		"altid": "8",
+		"id": 9,
+		"category": 2,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Sconces Right",
+		"altid": "7",
+		"id": 8,
+		"category": 2,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"level": "0",
+		"commFailure": "0"
+	}, {
+		"name": "SiteSensor",
+		"altid": "",
+		"id": 231,
+		"category": 4,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 0,
+		"interval": "1800",
+		"url": "http:\/\/localhost\/port_3480\/data_request?id=sdata&amp;output_format=json",
+		"lastval": "Patrick H. Rigney",
+		"armedtripped": "1",
+		"lasttrip": "1499347971",
+		"armed": "1",
+		"tripped": "1"
+	}, {
+		"name": "South Side Security",
+		"altid": "43",
+		"id": 54,
+		"category": 3,
+		"subcategory": 0,
+		"room": 14,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Stair Motion ZWN-BPC",
+		"altid": "88",
+		"id": 129,
+		"category": 4,
+		"subcategory": 3,
+		"room": 2,
+		"parent": 1,
+		"lasttrip": "1501875023",
+		"tripped": "0",
+		"armed": "0",
+		"armedtripped": "0",
+		"batterylevel": "82",
+		"commFailure": "0",
+		"status": "0",
+		"state": -1,
+		"comment": ""
+	}, {
+		"name": "Stair Multisensor",
+		"altid": "98",
+		"id": 206,
+		"category": 4,
+		"subcategory": 3,
+		"room": 2,
+		"parent": 1,
+		"armed": "0",
+		"lasttrip": "1501875028",
+		"tripped": "0",
+		"armedtripped": "0",
+		"batterylevel": "100",
+		"temperature": "76.7",
+		"humidity": "52",
+		"light": "71.1",
+		"status": "1"
+	}, {
+		"name": "Stairway (3-way)",
+		"altid": "11",
+		"id": 12,
+		"category": 2,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Stairway PLTS",
+		"altid": "",
+		"id": 157,
+		"category": 0,
+		"subcategory": -1,
+		"room": 2,
+		"parent": 0,
+		"iconstate": "0",
+		"status": "0",
+		"state": "0",
+		"armed": "1",
+		"interval": "60",
+		"interval2": "10",
+		"resetstate": "0",
+		"switchmode": "1",
+		"offcondition": "1501875083",
+		"conditionrepeat": "{'Restart':true}",
+		"objectstatusmap": "{{name = 'Arm', state = nil, seq = 0, oseq = 1462556655.6561},{name = 'Bypass', state = nil, seq = 0, oseq = 1462556655.6563},{name = 'Reset', state = nil, seq = 0, oseq = 1462556655.6565},{name = 'Trigger', state = false, seq = 1501874935.8534, oseq = 1501875083.3336},{name = 'Trigger2', state = nil, seq = 0, oseq = 1462556655.6569},{name = 'Restart', state = false, seq = 1501875023.8352, oseq = 1501875083.3355},{name = 'Restart2', state = nil, seq = 0, oseq = 1462556655.6571},{name = 'On', state = nil, seq = 0, oseq = 1462556655.6573},{name = 'Off', state = nil, seq = 0, oseq = 1462556655.6574},{name = 'motion_aeon', state = false, seq = 1501875012.9199, oseq = 1501875028.91},{name = 'motion_zwnbpc', state = false, seq = 1501875006.5498, oseq = 1501875023.8298},{name = 'light_on', state = false, seq = 1501874936.0898, oseq = 1501875083.3299},}",
+		"triggers": "[{'name':'light_on','device':'12','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'motion_aeon','device':'206','template':'3','service':'urn:micasaverde-com:serviceId:SecuritySensor1','args':[{'name':'Tripped','op':'=','value':'1'}]},{'name':'motion_zwnbpc','device':'129','template':'3','service':'urn:micasaverde-com:serviceId:SecuritySensor1','args':[{'name':'Tripped','op':'=','value':'1'}]}]",
+		"schedules": "[]",
+		"actions": "{'On':[{'delay':0,'actions':[{'device':12,'service':'urn:upnp-org:serviceId:Dimming1','action':'SetLoadLevelTarget','arguments':[{'name':'newLoadlevelTarget','value':'50'}]}]}],'Off':[{'delay':0,'actions':[{'device':12,'service':'urn:upnp-org:serviceId:Dimming1','action':'SetLoadLevelTarget','arguments':[{'name':'newLoadlevelTarget','value':'0'}]}]}]}"
+	}, {
+		"name": "Sunset Control PLEG",
+		"altid": "",
+		"id": 138,
+		"category": 0,
+		"subcategory": -1,
+		"room": 23,
+		"parent": 0,
+		"armed": "1",
+		"conditionsatisfied": "None",
+		"conditionrepeat": "{}",
+		"objectstatusmap": "{{name = 'sunset', state = false, seq = 1501805152.1004, oseq = 1501813122.1005},{name = 'c1', state = false, seq = 1501805152.1199, oseq = 1501813122.1016},{name = 'c2', state = true, seq = 1501813122.1027, oseq = 1501805152.4427},}",
+		"schedules": "[['sunset','2','-00:30:00t','1,2,3,4,5,6,7','','2','22:15:00','1,2,3,4,5,6,7','00:45:00']]",
+		"actions": "{'c1':[{'delay':0,'actions':[{'device':138,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'RunScene','arguments':[{'name':'SceneNameOrNumber','value':'6'}]}]}],'c2':[{'delay':0,'actions':[{'device':138,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'RunScene','arguments':[{'name':'SceneNameOrNumber','value':'7'}]}]}]}"
+	}, {
+		"name": "Terr Bath Motion",
+		"altid": "90",
+		"id": 131,
+		"category": 4,
+		"subcategory": 3,
+		"room": 4,
+		"parent": 1,
+		"armed": "0",
+		"lasttrip": "1501859354",
+		"tripped": "0",
+		"armedtripped": "0",
+		"batterylevel": "100",
+		"status": "0"
+	}, {
+		"name": "Terr Office Motion",
+		"altid": "96",
+		"id": 169,
+		"category": 4,
+		"subcategory": 3,
+		"room": 6,
+		"parent": 1,
+		"armed": "0",
+		"lasttrip": "1501875005",
+		"tripped": "0",
+		"armedtripped": "0",
+		"batterylevel": "100",
+		"status": "1"
+	}, {
+		"name": "Terr Office PLTS",
+		"altid": "",
+		"id": 150,
+		"category": 0,
+		"subcategory": -1,
+		"room": 6,
+		"parent": 0,
+		"iconstate": "0",
+		"status": "0",
+		"state": "0",
+		"armed": "1",
+		"interval": "1800",
+		"interval2": "60",
+		"resetstate": "0",
+		"switchmode": "1",
+		"offcondition": "1501697917",
+		"conditionrepeat": "{'Restart':true}",
+		"objectstatusmap": "{{name = 'Arm', state = nil, seq = 0, oseq = 1462476480.9183},{name = 'Bypass', state = nil, seq = 0, oseq = 1462476480.9185},{name = 'Reset', state = nil, seq = 0, oseq = 1462476480.9186},{name = 'Trigger', state = false, seq = 1501694848.2425, oseq = 1501697613.3377},{name = 'Trigger2', state = nil, seq = 0, oseq = 1462476480.9189},{name = 'Restart', state = false, seq = 1501874995.5935, oseq = 1501875005.644},{name = 'Restart2', state = nil, seq = 0, oseq = 1462476480.9191},{name = 'On', state = nil, seq = 0, oseq = 1462476480.9193},{name = 'Off', state = nil, seq = 0, oseq = 1462476480.9194},{name = 'light_main', state = false, seq = 1501694848.2394, oseq = 1501696333.2461},{name = 'light_far', state = false, seq = 1501696118.3268, oseq = 1501697613.3345},{name = 'light_near', state = false, seq = 1501694863.2595, oseq = 1501696348.2405},{name = 'light_left', state = false, seq = 1500917375.2838, oseq = 1500924575.8239},{name = 'light_right', state = false, seq = 1501083148.2363, oseq = 1501087248.3519},{name = 'motion', state = false, seq = 1501874995.5899, oseq = 1501875005.6404},}",
+		"triggers": "[{'name':'light_far','device':'31','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_left','device':'29','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_main','device':'33','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_near','device':'32','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_right','device':'30','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'motion','device':'169','template':'3','service':'urn:micasaverde-com:serviceId:SecuritySensor1','args':[{'name':'Tripped','op':'=','value':'1'}]}]",
+		"actions": "{'Off':[{'delay':0,'actions':[{'device':150,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'RunScene','arguments':[{'name':'SceneNameOrNumber','value':'12'}]}]}]}"
+	}, {
+		"name": "Terrace",
+		"altid": "therm.02AA01AC121508PP",
+		"id": 144,
+		"category": 5,
+		"subcategory": -1,
+		"room": 2,
+		"parent": 136,
+		"fanmode": "Auto",
+		"fan": "On",
+		"hvacstate": "FanOnly",
+		"mode": "CoolOn",
+		"temperature": "74",
+		"setpoint": "74",
+		"heat": "74",
+		"cool": "74",
+		"commands": "hvac_off,hvac_auto,hvac_state,heating_setpoint,cooling_setpoint,hvac_heat,hvac_cool,fan_label,fan_auto,fan_on",
+		"batterylevel": "100"
+	}, {
+		"name": "Terrace Bath Fan",
+		"altid": "31",
+		"id": 25,
+		"category": 3,
+		"subcategory": 1,
+		"room": 4,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Terrace Bath PLEG",
+		"altid": "",
+		"id": 152,
+		"category": 0,
+		"subcategory": -1,
+		"room": 4,
+		"parent": 0,
+		"armed": "1",
+		"conditionsatisfied": "None",
+		"conditionrepeat": "{'extend':true}",
+		"objectstatusmap": "{{name = 'nighttime', state = false, seq = 1501815600.1005, oseq = 1501843994.1004},{name = 'fan_timer', state = false, seq = 1500602971.3543, oseq = 1500604771.0378},{name = 'light_timer', state = false, seq = 1501859349.3307, oseq = 1501859949.1007},{name = 'fan_start', state = false, seq = 1500602971.2408, oseq = 1500604771.3263},{name = 'light_on', state = false, seq = 1501859349.128, oseq = 1501859949.9169},{name = 'light_day_start', state = false, seq = 1501859348.7396, oseq = 1501859349.1329},{name = 'light_night_start', state = false, seq = 1501127394.6683, oseq = 1501127394.9339},{name = 'extend', state = false, seq = 1501859349.3018, oseq = 1501859949.9212},{name = 'fan_on', state = false, seq = 1500602971.2395, oseq = 1500604771.3251},{name = 'light_shower', state = false, seq = 1481127265.9656, oseq = 1481128085.7374},{name = 'light_task', state = false, seq = 1501859349.1256, oseq = 1501859949.674},{name = 'light_vanity', state = false, seq = 1501859349.2951, oseq = 1501859949.9145},{name = 'motion', state = false, seq = 1501859348.7354, oseq = 1501859354.0454},{name = 'light_timer_expire', state = false, seq = 1501859949.1096, oseq = 1501859949.9238},{name = 'fan_timer_expire', state = false, seq = 1500604771.0493, oseq = 1500604771.3364},}",
+		"triggers": "[{'name':'fan_on','device':'25','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_shower','device':'97','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_task','device':'23','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'light_vanity','device':'24','template':'1','service':'urn:upnp-org:serviceId:SwitchPower1','args':[{'name':'Status','op':'=','value':'1'}]},{'name':'motion','device':'131','template':'3','service':'urn:micasaverde-com:serviceId:SecuritySensor1','args':[{'name':'Tripped','op':'=','value':'1'}]}]",
+		"schedules": "[['fan_timer','6','','','','1','30:00','',''],['light_timer','6','','','','1','10:00','',''],['nighttime','2','23:00:00','1,2,3,4,5,6,7','','2','r','1,2,3,4,5,6,7','']]",
+		"actions": "{'fan_start':[{'delay':0,'actions':[{'device':152,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'fan_timer'},{'name':'intervalTime','value':''}]}]}],'light_on':[{'delay':0,'actions':[{'device':152,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'light_timer'},{'name':'intervalTime','value':''}]}]}],'light_day_start':[{'delay':0,'actions':[{'device':23,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'1'}]},{'device':24,'service':'urn:upnp-org:serviceId:Dimming1','action':'SetLoadLevelTarget','arguments':[{'name':'newLoadlevelTarget','value':'100'}]}]}],'light_night_start':[{'delay':0,'actions':[{'device':24,'service':'urn:upnp-org:serviceId:Dimming1','action':'SetLoadLevelTarget','arguments':[{'name':'newLoadlevelTarget','value':'10'}]}]}],'extend':[{'delay':0,'actions':[{'device':152,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'StartTimer','arguments':[{'name':'timerName','value':'light_timer'},{'name':'intervalTime','value':''}]}]}],'light_timer_expire':[{'delay':0,'actions':[{'device':152,'service':'urn:rts-services-com:serviceId:ProgramLogicC','action':'RunScene','arguments':[{'name':'SceneNameOrNumber','value':'28'}]}]}],'fan_timer_expire':[{'delay':0,'actions':[{'device':25,'service':'urn:upnp-org:serviceId:SwitchPower1','action':'SetTarget','arguments':[{'name':'newTargetValue','value':'0'}]}]}]}"
+	}, {
+		"name": "Terrace Bath Sho",
+		"altid": "23",
+		"id": 97,
+		"category": 3,
+		"subcategory": 0,
+		"room": 4,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Terrace Bath Task",
+		"altid": "21",
+		"id": 23,
+		"category": 3,
+		"subcategory": 0,
+		"room": 4,
+		"parent": 1,
+		"status": "0"
+	}, {
+		"name": "Terrace Bath Vanity",
+		"altid": "22",
+		"id": 24,
+		"category": 2,
+		"subcategory": 0,
+		"room": 4,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Terrace Humidity",
+		"altid": "humid.02AA01AC121508PP",
+		"id": 147,
+		"category": 16,
+		"subcategory": -1,
+		"room": 2,
+		"parent": 136,
+		"humidity": "54"
+	}, {
+		"name": "Theater SC4",
+		"altid": "3",
+		"id": 4,
+		"category": 14,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"commFailure": "0"
+	}, {
+		"name": "Top Stair SC1",
+		"altid": "52",
+		"id": 72,
+		"category": 14,
+		"subcategory": 0,
+		"room": 10,
+		"parent": 1,
+		"commFailure": "0"
+	}, {
+		"name": "Upstairs",
+		"altid": "therm.02AA01AC1513005P",
+		"id": 143,
+		"category": 5,
+		"subcategory": -1,
+		"room": 19,
+		"parent": 136,
+		"fanmode": "Auto",
+		"fan": "On",
+		"hvacstate": "Cooling",
+		"mode": "CoolOn",
+		"temperature": "74",
+		"setpoint": "71",
+		"heat": "71",
+		"cool": "71",
+		"commands": "hvac_off,hvac_auto,hvac_state,heating_setpoint,cooling_setpoint,hvac_heat,hvac_cool,fan_label,fan_auto,fan_on",
+		"batterylevel": "100"
+	}, {
+		"name": "Upstairs Humidity",
+		"altid": "humid.02AA01AC1513005P",
+		"id": 146,
+		"category": 16,
+		"subcategory": -1,
+		"room": 19,
+		"parent": 136,
+		"humidity": "55"
+	}, {
+		"name": "Vacation Mode",
+		"altid": "",
+		"id": 156,
+		"category": 0,
+		"subcategory": -1,
+		"room": 23,
+		"parent": 0,
+		"text1": "VIRTUAL",
+		"text2": "SWITCH",
+		"status": "0"
+	}, {
+		"name": "Vegetables",
+		"altid": "142695af-a398-4def-8a6b-0f16232ce35b",
+		"id": 501,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"enabled": "1",
+		"laststart": "1501491618",
+		"runends": "1501492269",
+		"duration": "11",
+		"remaining": "0",
+		"watering": "0"
+	}, {
+		"name": "VRCS4-MRZ Switch",
+		"altid": "4",
+		"id": 5,
+		"category": 3,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"commFailure": "0"
+	}, {
+		"name": "Window Recessed",
+		"altid": "9",
+		"id": 10,
+		"category": 2,
+		"subcategory": 0,
+		"room": 2,
+		"parent": 1,
+		"status": "0",
+		"level": "0"
+	}, {
+		"name": "Z1 Front Shrubs",
+		"altid": "e1f74ecc-6938-4f69-8f28-3940d6b027ff",
+		"id": 494,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"enabled": "1",
+		"remaining": "0",
+		"watering": "0"
+	}, {
+		"name": "Z4 Entry Lawn",
+		"altid": "ff98d274-8a19-4ef3-82f4-e52d4837ca20",
+		"id": 497,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"enabled": "1",
+		"remaining": "0",
+		"watering": "0"
+	}, {
+		"name": "Z5 Front Lawn",
+		"altid": "571b1130-3d12-45fd-820f-cff0673548dc",
+		"id": 492,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"enabled": "1",
+		"remaining": "0",
+		"watering": "0"
+	}, {
+		"name": "Z6 Rear Lawn",
+		"altid": "6d75faef-30fd-4dbd-8288-71f579b6f198",
+		"id": 498,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"enabled": "1",
+		"remaining": "0",
+		"watering": "0"
+	}, {
+		"name": "Z7 Veg",
+		"altid": "51cd069c-3cc4-42f5-8003-e6572e67680b",
+		"id": 499,
+		"category": 0,
+		"subcategory": -1,
+		"room": 0,
+		"parent": 232,
+		"enabled": "1",
+		"remaining": "0",
+		"watering": "0"
+	}],
+	"categories": [{
+		"name": "Dimmable Switch",
+		"id": 2
+	}, {
+		"name": "On\/Off Switch",
+		"id": 3
+	}, {
+		"name": "Sensor",
+		"id": 4
+	}, {
+		"name": "Thermostat",
+		"id": 5
+	}, {
+		"name": "Generic IO",
+		"id": 11
+	}, {
+		"name": "Scene Controller",
+		"id": 14
+	}, {
+		"name": "Humidity Sensor",
+		"id": 16
+	}, {
+		"name": "Temperature Sensor",
+		"id": 17
+	}, {
+		"name": "Light Sensor",
+		"id": 18
+	}, {
+		"name": "UV Sensor",
+		"id": 28
+	}],
+	"loadtime": 1501877902,
+	"dataversion": 877902194,
+	"state": 1,
+	"comment": "Ready."
+}

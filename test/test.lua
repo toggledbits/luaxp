@@ -416,12 +416,14 @@ end
 local json = require("json")
 if json == nil then json = require('dkjson') end
 if json then
-    local file = io.open("sample1.json", "r")
+    local file = io.open("test/testdata.json", "r")
     if file then
         local s = file:read("*all")
         file:close()
         ctx.response = json.decode(s)
-     end
+    else
+	print(RED.."JSON data could not be loaded!"..RESET)
+    end
 end
 
 doNumericParsingTests()
@@ -435,4 +437,8 @@ doTimeTests()
 doMiscSyntaxTests()
 doMiscFuncTests()
 
+print("")
 print(string.format("Ran %d tests, %d skipped, %d errors.", nTest, nSkip, nErr))
+if ctx.response == nil then
+    print(RED.."JSON data not loaded, some tests skipped"..RESET)
+end
