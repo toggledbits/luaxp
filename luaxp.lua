@@ -10,7 +10,7 @@
 
 local _M = {}
 
-_M._VERSION = "0.9.3+SiteSensor"
+_M._VERSION = "0.9.4"
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
