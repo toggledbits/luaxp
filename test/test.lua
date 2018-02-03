@@ -412,6 +412,15 @@ local function doNullTests()
     eval("null==''", true)
 end
 
+local function doRegressionTests()
+    -- For this test, save current context and use special.
+    local s = '{"coord":{"lon":-84.56,"lat":33.39},"weather":[{"id":800,"main":"Clear","description":"clear sky","icon":"01d"}],"base":"stations","main":{"temp":281.29,"pressure":1026,"humidity":23,"temp_min":278.15,"temp_max":285.15},"visibility":16093,"wind":{"speed":5.1,"deg":150},"clouds":{"all":1},"dt":1517682900,"sys":{"type":1,"id":789,"message":0.0041,"country":"US","sunrise":1517661125,"sunset":1517699557},"id":0,"name":"Peachtree City","cod":200}'
+    local t = ctx
+    ctx = { response = json.decode(s) }
+    eval("response.weather[1].description", "clear sky")
+    ctx = t -- restore prior context
+end
+
 -- Load JSON data into context, if we can.
 local json = require("json")
 if json == nil then json = require('dkjson') end
@@ -426,6 +435,8 @@ if json then
     end
 end
 
+--[[
+--]]
 doNumericParsingTests()
 doNullTests()
 doNumericOpsTests()
@@ -436,6 +447,7 @@ doStringFuncTests()
 doTimeTests()
 doMiscSyntaxTests()
 doMiscFuncTests()
+doRegressionTests()
 
 print("")
 print(string.format("Ran %d tests, %d skipped, %d errors.", nTest, nSkip, nErr))

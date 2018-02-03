@@ -1049,6 +1049,14 @@ _run = function( ce, ctx, stack )
                     v2.index = nil
                 end
                 v = v1[v2.name]
+                if v2.index ~= nil then
+                    -- Handle subscript in tree descent
+                    local ix = _run(v2.index, ctx, {})
+                    D("_run: applying subscript [%1] in descent to %2", ix, v2.name)
+                    if ix == nil then evalerror("Subscript evaluation failed for " .. v2.name, v2.pos) end
+                    v = v[ix]
+                    if v == nil then evalerror("Subscript out of range: " .. tostring(v2.name) .. "[" .. ix .. "]", v2.pos) end
+                end
                 if v == nil then evalerror("Subreference not found: " .. tostring(v2.name), v2.pos) end
             elseif (e.op == '+') then
                 -- Special case for +, if either operand is a string, treat as concatenation
