@@ -100,6 +100,20 @@ local _comp, _run, scan_token
 
 -- Utility functions
 
+local function deepcopy( t )
+    if type(t) ~= "table" then return t end
+    local k,v
+    local r = {}
+    for k,v in pairs( t ) do
+        if type(v) == "table" then
+            r[k] = deepcopy(v)
+        else
+            r[k] = v
+        end
+    end
+    return r
+end
+
 -- Value is atom if it matches our pattern, and specific type of atom if matches type passwd
 local function isAtom( v, typ )
     return base.type(v) == "table" and v.type ~= nil and ( typ == nil or v.type == typ )
@@ -423,7 +437,9 @@ local function xp_keys( arr )
     local k
     local r = {}
     for k,_ in pairs( arr ) do
-        table.insert( r, k )
+        if k ~= "__context" then
+            table.insert( r, k )
+        end
     end
     return r
 end
@@ -479,9 +495,12 @@ local nativeFuncs = {
     , ['choose'] = { nargs = 2, impl = function( argv ) local ix = argv[1] if ix < 1 or ix > (#argv-2) then return argv[2] else return argv[ix+2] end end }
     , ['select'] = { nargs = 3, impl = function( argv ) return xp_select(argv[1],argv[2],argv[3]) end }
     , ['keys'] = { nargs = 1, impl = function( argv ) return xp_keys( argv[1] ) end }
-    , ['iterate'] = { nargs = 2, impl = function( argv ) return xp_iter( argv.context, argv[1], argv[2], argv[3] ) end }
+    , ['iterate'] = { nargs = 2, impl = function( argv ) return xp_iter( argv.__context, argv[1], argv[2], argv[3] ) end }
     , ['if'] = { nargs = 2, impl = function( argv ) if argv[1] then return argv[2] or NULLATOM else return argv[3] or NULLATOM end end }
     , ['void'] = { nargs = 0, impl = function( argv ) return NULLATOM end }
+    , ['list'] = { nargs = 0, impl = function( argv ) local b = deepcopy( argv ) b.__context=nil return b end }
+    , ['first'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[1] end end }
+    , ['last'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[#arr] end end }
 }
 
 -- Adapted from "BitUtils", Lua-users wiki at http://lua-users.org/wiki/BitUtils; thank you kind stranger(s)...
@@ -1210,7 +1229,7 @@ _run = function( ce, ctx, stack )
             -- Run the implementation
             local status
             D("_run: calling %1 with args=%2", e.name, argv)
-            argv.context = ctx -- trickery
+            argv.__context = ctx -- trickery
             status, v = pcall(impl, argv)
             D("_run: finished %1() call, status=%2, result=%3", e.name, status, v)
             if not status then
