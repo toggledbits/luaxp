@@ -344,6 +344,13 @@ local function doMiscFuncTests()
     eval("choose(3,\"default\",\"A\",\"B\",\"C\",\"D\")", "C")
     eval("choose(9,\"default\",\"A\",\"B\",\"C\",\"D\")", "default")
     
+    eval("#list(1,2,3,4,5,9)", 6, nil, "Returns table of six elements")
+    eval("list(time(),strftime('%c',time()))", nil, nil, "Returns two-element array with timestamp and string time")
+    eval("last(list('dog','cat','mouse',time(),upper('leaf')))", "LEAF")
+    eval("last(list())", L.NULL, nil, "Empty list returns null")
+    eval("last('cat')", L.NULL, nil, "Invalid data returns null")
+    eval("first(list('dog','cat','mouse',time(),upper('leaf')))", "dog")
+    
     if ctx.response ~= nil then
         eval("#keys(response.rooms)", 23)
         eval("i=''", "",nil,"Setup for next test") 
