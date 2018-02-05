@@ -1,4 +1,8 @@
-require("json")
+-- Find the luaxp we're going to test
+local moduleName = arg[1] or "luaxp"
+local L = require(moduleName)
+
+local json = require("json")
 
 local mt = getmetatable(_G)
 if mt == nil then
@@ -33,9 +37,6 @@ end
 local function debugPrint( msg )
     print(string.char(27) .. "[0;34;40m" .. msg .. string.char(27) .. "[0m") -- debug in blue
 end
-
-local L = require("luaxp")
-
 -- Uncomment the line below to enable debugging
 -- L._DEBUG = debugPrint
 
@@ -346,10 +347,12 @@ local function doMiscFuncTests()
     
     eval("#list(1,2,3,4,5,9)", 6, nil, "Returns table of six elements")
     eval("list(time(),strftime('%c',time()))", nil, nil, "Returns two-element array with timestamp and string time")
-    eval("last(list('dog','cat','mouse',time(),upper('leaf')))", "LEAF")
-    eval("last(list())", L.NULL, nil, "Empty list returns null")
-    eval("last('cat')", L.NULL, nil, "Invalid data returns null")
     eval("first(list('dog','cat','mouse',time(),upper('leaf')))", "dog")
+    eval("first(list())", L.NULL, nil, "First element of empty list returns null")
+    eval("last(list('dog','cat','mouse',time(),upper('leaf')))", "LEAF")
+    eval("last(list())", L.NULL, nil, "Last element of empty list returns null")
+    eval("last('cat')", L.NULL, nil, "Invalid data returns null", "Test constant")
+    eval("last(tonumber('123'))", L.NULL, nil, "Invalid data returns null", "Test expression")
     
     if ctx.response ~= nil then
         eval("#keys(response.rooms)", 23)
@@ -464,7 +467,7 @@ doMiscFuncTests()
 doRegressionTests()
 
 print("")
-print(string.format("Ran %d tests, %d skipped, %d errors.", nTest, nSkip, nErr))
+print(string.format("Using module %s, ran %d tests, %d skipped, %d errors.", moduleName, nTest, nSkip, nErr))
 if ctx.response == nil then
     print(RED.."JSON data not loaded, some tests skipped"..RESET)
 end
