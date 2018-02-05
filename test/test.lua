@@ -3,6 +3,9 @@ local moduleName = arg[1] or "luaxp"
 local L = require(moduleName)
 
 local json = require("json")
+if json == nil then json = require('dkjson') end
+
+local testData = arg[2] or "test/testdata.json"
 
 local mt = getmetatable(_G)
 if mt == nil then
@@ -439,10 +442,8 @@ local function doRegressionTests()
 end
 
 -- Load JSON data into context, if we can.
-local json = require("json")
-if json == nil then json = require('dkjson') end
 if json then
-    local file = io.open("test/testdata.json", "r")
+    local file = io.open( testData, "r" )
     if file then
         local s = file:read("*all")
         file:close()
