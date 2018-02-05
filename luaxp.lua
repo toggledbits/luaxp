@@ -46,7 +46,7 @@ local UNOP = 'unop'
 local BINOP = 'binop'
 local TNUL = 'null'
 
-local NULLATOM = { ['type']=TNUL }
+local NULLATOM = { __type=TNUL }
 
 local charmap = { t = "\t", r = "\r", n = "\n" }
 
@@ -114,9 +114,9 @@ local function deepcopy( t )
     return r
 end
 
--- Value is atom if it matches our pattern, and specific type of atom if matches type passwd
+-- Value is atom if it matches our atom pattern, and specific atom type if passed
 local function isAtom( v, typ )
-    return base.type(v) == "table" and v.type ~= nil and ( typ == nil or v.type == typ )
+    return base.type(v) == "table" and v.__type ~= nil and ( typ == nil or v.__type == typ )
 end
 
 -- Special case null atom
@@ -126,12 +126,12 @@ end
 
 local function comperror(msg, loc)
     -- print("throwing comperror at " .. tostring(loc) .. ": " .. tostring(msg))
-    return error( { source='LuaXP', ['type']='compile', location=loc, message=msg } )
+    return error( { __source='luaxp', ['type']='compile', location=loc, message=msg } )
 end
 
 local function evalerror(msg, loc)
     -- print("throwing evalerror at " .. tostring(loc) .. ": " .. tostring(msg))
-    return error( { source='LuaXP', ['type']='evaluation', location=loc, message=msg } )
+    return error( { __source='luaxp', ['type']='evaluation', location=loc, message=msg } )
 end
 
 local function xp_pow(b, x)
@@ -663,7 +663,7 @@ local function scan_fref( expr, index, name )
                 end
                 index = index + 1
                 D("scan_fref returning, function is %1 with %2 args", name, table.getn(args), dump(args))
-                return index, { ['type']=FREF, args=args, name=name, pos=index }
+                return index, { __type=FREF, args=args, name=name, pos=index }
             else
                 -- It's part of our argument, so just add it to the subexpress string
                 subexp = subexp .. ch
@@ -711,7 +711,7 @@ local function scan_aref( expr, index, name )
             D("scan_aref: Found a closing bracket, subexp=%1", subexp)
             args = _comp(subexp)
             D("scan_aref returning, array is %1", name)
-            return index+1, { ['type']=VREF, name=name, index=args, pos=index }
+            return index+1, { __type=VREF, name=name, index=args, pos=index }
         else
             subexp = subexp .. ch
             index = index + 1
@@ -744,7 +744,7 @@ local function scan_vref( expr, index )
         index = index + 1
     end
 
-    return index, { ['type']=VREF, name=name, pos=index }
+    return index, { __type=VREF, name=name, pos=index }
 end
 
 -- Scan nested expression (called when ( seen while scanning for token)
@@ -785,7 +785,7 @@ local function scan_unop( expr, index )
         index = index + 1
         local k, r = scan_token( expr, index )
         if (r == nil) then return k, r end
-        return k, { r, { ['type']=UNOP, op=ch, pos=index } }
+        return k, { r, { __type=UNOP, op=ch, pos=index } }
     end
     return index, nil -- Not a UNOP
 end
@@ -827,7 +827,7 @@ local function scan_binop( expr, index )
     end
 
     D("scan_binop succeeds with op=%1", op)
-    return index, { ['type']=BINOP, op=op, prec=prec, pos=index }
+    return index, { __type=BINOP, op=op, prec=prec, pos=index }
 end
 
 -- Scan our next token (forward-declared)
@@ -1233,7 +1233,7 @@ _run = function( ce, ctx, stack )
             status, v = pcall(impl, argv)
             D("_run: finished %1() call, status=%2, result=%3", e.name, status, v)
             if not status then
-                if base.type(v) == "table" and v.source == "LuaXP" then
+                if base.type(v) == "table" and v.__source == "luaxp" then
                     v.location = e.pos
                     error(v) -- that one of our errors, just pass along
                 end
@@ -1243,7 +1243,7 @@ _run = function( ce, ctx, stack )
             D("_run: handling vref, name=%1, push to stack for later eval", e.name)
             v = e -- we're going to push the VREF directly.
         else
-            error("Bug: invalid object type in parse tree: " .. tostring(e.type), 0)
+            error("Bug: invalid atom type in parse tree: " .. tostring(e.__type), 0)
         end
 
         -- Push result to stack, move on in tree
