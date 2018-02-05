@@ -84,9 +84,9 @@ local function D(s, ...)
             n = tonumber(n, 10)
             if n < 1 or n > #arg then return "nil" end
             local val = arg[n]
-            if type(val) == "table" then
+            if base.type(val) == "table" then
                 return dump(val)
-            elseif type(val) == "string" then
+            elseif base.type(val) == "string" then
                 return string.format("%q", val)
             end
             return tostring(val)
@@ -101,11 +101,11 @@ local _comp, _run, scan_token
 -- Utility functions
 
 local function deepcopy( t )
-    if type(t) ~= "table" then return t end
+    if base.type(t) ~= "table" then return t end
     local k,v
     local r = {}
     for k,v in pairs( t ) do
-        if type(v) == "table" then
+        if base.type(v) == "table" then
             r[k] = deepcopy(v)
         else
             r[k] = v
@@ -195,7 +195,7 @@ end
 -- Somewhat simple time parsing. Handles the most common forms of ISO 8601, plus many less regular forms.
 -- If mm/dd vs dd/mm is ambiguous, it tries to discern using current locale's rule.
 local function xp_parse_time( t )
-    if type(t) == "number" then return t end -- if already numeric, assume it's already timestamp
+    if base.type(t) == "number" then return t end -- if already numeric, assume it's already timestamp
     if t == nil or tostring(t):lower() == "now" then return os.time() end
     t = tostring(t) -- force string
     local now = os.time()
@@ -486,7 +486,7 @@ local nativeFuncs = {
     , ['ltrim'] = { nargs = 1, impl = function( argv ) return xp_ltrim(tostring(argv[1])) end }
     , ['rtrim'] = { nargs = 1, impl = function( argv ) return xp_rtrim(tostring(argv[1])) end }
     , ['tostring'] = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return "" else return tostring(argv[1]) end end }
-    , ['tonumber'] = { nargs = 1, impl = function( argv ) if type(argv[1]) == "boolean" then if argv[1] then return 1 else return 0 end end return tonumber(argv[1], argv[2] or 10) or evalerror('Argument could not be converted to number') end }
+    , ['tonumber'] = { nargs = 1, impl = function( argv ) if base.type(argv[1]) == "boolean" then if argv[1] then return 1 else return 0 end end return tonumber(argv[1], argv[2] or 10) or evalerror('Argument could not be converted to number') end }
     , ['format'] = { nargs = 1, impl = function( argv ) return string.format( unpack(argv) ) end }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
     , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(unpack(argv)) end }
@@ -499,8 +499,8 @@ local nativeFuncs = {
     , ['if'] = { nargs = 2, impl = function( argv ) if argv[1] then return argv[2] or NULLATOM else return argv[3] or NULLATOM end end }
     , ['void'] = { nargs = 0, impl = function( argv ) return NULLATOM end }
     , ['list'] = { nargs = 0, impl = function( argv ) local b = deepcopy( argv ) b.__context=nil return b end }
-    , ['first'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[1] end end }
-    , ['last'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[#arr] end end }
+    , ['first'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if base.type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[1] end end }
+    , ['last'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if base.type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[#arr] end end }
 }
 
 -- Adapted from "BitUtils", Lua-users wiki at http://lua-users.org/wiki/BitUtils; thank you kind stranger(s)...
