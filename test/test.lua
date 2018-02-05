@@ -420,11 +420,18 @@ local function doNullTests()
 end
 
 local function doRegressionTests()
-    -- For this test, save current context and use special.
+    local t = ctx -- save current context
+
+    -- For this test, use special context.
     local s = '{"coord":{"lon":-84.56,"lat":33.39},"weather":[{"id":800,"main":"Clear","description":"clear sky","icon":"01d"}],"base":"stations","main":{"temp":281.29,"pressure":1026,"humidity":23,"temp_min":278.15,"temp_max":285.15},"visibility":16093,"wind":{"speed":5.1,"deg":150},"clouds":{"all":1},"dt":1517682900,"sys":{"type":1,"id":789,"message":0.0041,"country":"US","sunrise":1517661125,"sunset":1517699557},"id":0,"name":"Peachtree City","cod":200}'
-    local t = ctx
     ctx = { response = json.decode(s) }
     eval("response.weather[1].description", "clear sky")
+    
+    -- Special context here as well.
+    ctx = json.decode('{"val":8,"ack":true,"ts":1517804967381,"q":0,"from":"system.adapter.mihome-vacuum.0","lc":"xyz","_id":"mihome-vacuum.0.info.state","type":"state","common":{"name":"Vacuum state","type":"number","read":true,"max":30,"states":{"1":"Unknown 1","2":"Sleep no Charge","3":"Sleep","5":"Cleaning","6":"Returning home","7":"Manuell mode","8":"Charging","10":"Paused","11":"Spot cleaning","12":"Error?!"}},"native":{}}')
+    ctx = { response=ctx }
+    eval("response.val", 8, nil, "Specific test for atom mis-identification (issue X) discovered by SiteSensor user")
+    
     ctx = t -- restore prior context
 end
 
