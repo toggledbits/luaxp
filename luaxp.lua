@@ -55,11 +55,9 @@ local reservedWords = { ['false']=false, ['true']=true, pi=3.14159265, ['null']=
 local function dump(t, seen)
     if seen == nil then seen = {} end
     local typ = base.type(t)
-    local st = ""
     if typ == "table" and seen[t]==nil then
         seen[t] = 1
-        st = "{ "
-        local n,v
+        local st = "{ "
         local first = true
         for n,v in pairs(t) do
             if (not first) then st = st .. ", " end
@@ -102,7 +100,6 @@ local _comp, _run, scan_token
 
 local function deepcopy( t )
     if base.type(t) ~= "table" then return t end
-    local k,v
     local r = {}
     for k,v in pairs( t ) do
         if base.type(v) == "table" then
@@ -142,8 +139,7 @@ local function xp_select(obj, keyname, keyval)
     if base.type(obj) ~= "table" then evalerror("select() requires table/object arg 1") end
     keyname = tostring(keyname)
     keyval = tostring(keyval)
-    local i,v
-    for i,v in pairs(obj) do
+    for _,v in pairs(obj) do
         if tostring(v[keyname]) == keyval then
             return v
         end
@@ -153,12 +149,11 @@ end
 
 local monthNameMap = {}
 local function mapLocaleMonth( m )
-    local k
     if m == nil then error("nil month name") end
     local ml = string.lower(tostring(m))
     if ml:match("^%d+$") then
         -- All numeric. Simply return numeric form if valid range.
-        k = tonumber(ml) or 0
+        local k = tonumber(ml) or 0
         if k >=1 and k <= 12 then return k end
     end
     if monthNameMap[ml] ~= nil then -- cached result?
@@ -291,7 +286,6 @@ local function xp_parse_time( t )
     -- Time? Note: does not support decimal fractions except on seconds component, which is ignored (ISO 8601 allows on any, but must be last component)
     D("Scanning for time from: '%1'", t)
     local hasTZ = false
-    local sep = nil
     p = { t:match("^%s*T?(%d%d)(%d%d)(.*)") } -- ISO 8601 (Thhmm) without delimiters
     if p[1] == nil then p = { t:match("^%s*T?(%d+):(%d+)(.*)") } end -- with delimiters
     if p[1] ~= nil then
@@ -355,7 +349,6 @@ local function xp_parse_time( t )
         delta = tonumber(p[2])
         if delta == nil then evalerror("Invalid delta spec: " .. t) end
         t = p[3] or ""
-        local k
         for k = 1,3 do
             D("Parsing offset from %1", t)
             p = { t:match("%:(%d+)(.*)") }
@@ -434,9 +427,8 @@ end
 
 local function xp_keys( arr )
     if base.type( arr ) ~= "table" then evalerror("Array/table required") end
-    local k
     local r = {}
-    for k,_ in pairs( arr ) do
+    for k in pairs( arr ) do
         if k ~= "__context" then
             table.insert( r, k )
         end
@@ -448,10 +440,9 @@ local function xp_iter( ctx, arr, iter, nom )
     D("xp_iter(ctx,arr,%3,%4)", ctx, arr, iter, nom)
     if ctx == nil then ctx = {} end
     if base.type( arr ) ~= "table" then evalerror("Array/table required") end
-    local k,v
     local r = {}
     local ce = _comp( tostring(iter), ctx )
-    for k,v in pairs( arr ) do
+    for _,v in pairs( arr ) do
         ctx[nom or "_"] = v
         D("xp_iter() evaluate %1 against %2", iter, v)
         local t = _run( ce, ctx )
@@ -540,38 +531,38 @@ local function scan_numeric( expr, index )
     local len = string.len(expr)
     local ch, i
     local val = 0
-    local base = 0
-    -- Try to guess the base first
+    local radix = 0
+    -- Try to guess the radix first
     ch = string.sub(expr, index, index)
     if (ch == '0' and index < len) then
         -- Look to next character
         index = index + 1
         ch = string.sub(expr, index, index)
         if (ch == 'b' or ch == 'B') then
-            base = 2
+            radix = 2
             index = index + 1
         elseif (ch == 'x' or ch == 'X') then
-            base = 16
+            radix = 16
             index = index + 1
         elseif (ch == '.') then
-            base = 10 -- going to be a decimal number
+            radix = 10 -- going to be a decimal number
         else
-            base = 8
+            radix = 8
         end
     end
-    if (base <= 0) then base = 10 end
+    if (radix <= 0) then radix = 10 end
     -- Now parse the whole part of the number
     while (index <= len) do
         ch = string.sub(expr, index, index)
         if (ch == '.') then break end
         i = string.find("0123456789ABCDEF", string.upper(ch), 1, true)
-        if i == nil or ( base==10 and i==15 ) then break end
-        if i > base then comperror("Invalid digit for base "..base, index) end
-        val = base * val + (i-1)
+        if i == nil or ( radix==10 and i==15 ) then break end
+        if i > radix then comperror("Invalid digit for radix "..radix, index) end
+        val = radix * val + (i-1)
         index = index + 1
     end
     -- Parse fractional part, if any
-    if (ch == '.' and base==10) then
+    if (ch == '.' and radix==10) then
         local ndec = 0
         index = index + 1 -- get past decimal point
         while (index <= len) do
@@ -584,7 +575,7 @@ local function scan_numeric( expr, index )
         end
     end
     -- Parse exponent, if any
-    if ( (ch == 'e' or ch == 'E') and base == 10 ) then
+    if ( (ch == 'e' or ch == 'E') and radix == 10 ) then
         local npow = 0
         local neg = nil
         index = index + 1 -- get base exponent marker
@@ -658,11 +649,11 @@ local function scan_fref( expr, index, name )
                 D("scan_fref: handling end of argument list with subexp=%1", subexp)
                 if string.len(subexp) > 0 then -- PHR??? Need to test out all whitespace strings from the likes of "func( )"
                     table.insert(args, _comp( subexp ) ) -- compile the subexp and put it on the list
-                elseif table.getn(args) > 0 then
+                elseif #args > 0 then
                     comperror("Invalid subexpression", index)
                 end
                 index = index + 1
-                D("scan_fref returning, function is %1 with %2 args", name, table.getn(args), dump(args))
+                D("scan_fref returning, function is %1 with %2 args", name, #args, dump(args))
                 return index, { __type=FREF, args=args, name=name, pos=index }
             else
                 -- It's part of our argument, so just add it to the subexpress string
@@ -700,8 +691,6 @@ end
 local function scan_aref( expr, index, name )
     D("scan_aref from %1 in %2", index, expr)
     local len = string.len(expr)
-    local args = {}
-    local parenLevel = 1
     local ch
     local subexp = ""
     while ( true ) do
@@ -709,7 +698,7 @@ local function scan_aref( expr, index, name )
         ch = string.sub(expr, index, index)
         if (ch == ']') then
             D("scan_aref: Found a closing bracket, subexp=%1", subexp)
-            args = _comp(subexp)
+            local args = _comp(subexp)
             D("scan_aref returning, array is %1", name)
             return index+1, { __type=VREF, name=name, index=args, pos=index }
         else
@@ -751,12 +740,11 @@ end
 local function scan_expr( expr, index )
     D("scan_expr from %1 in %2", index, expr)
     local len = string.len(expr)
-    local ch, k
     local st = ""
     local parenLevel = 0
     index = index + 1
     while (index <= len) do
-        ch = string.sub(expr,index,index)
+        local ch = string.sub(expr,index,index)
         if (ch == ')') then
             if (parenLevel == 0) then
                 D("scan_expr parsing subexpression=%1", st)
@@ -778,8 +766,8 @@ end
 local function scan_unop( expr, index )
     D("scan_unop from %1 in %2", index, expr)
     local len = string.len(expr)
-    local ch, k
-    ch = string.sub(expr, index, index)
+    if (index > len) then return index, nil end
+    local ch = string.sub(expr, index, index)
     if (ch == '-' or ch == '+' or ch == '!' or ch == '#') then
         -- We have a UNOP
         index = index + 1
@@ -793,20 +781,18 @@ end
 local function scan_binop( expr, index )
     D("scan_binop from %1 in %2", index, expr)
     local len = string.len(expr)
-    local matched = false
     index = skip_white(expr, index)
     if (index > len) then return index, nil end
 
     local op = ""
-    local ch
     local k = 0
     local prec
     while (index <= len) do
-        ch = string.sub(expr,index,index)
+        local ch = string.sub(expr,index,index)
         local st = op .. ch
         local matched = false
         k = k + 1
-        for n,f in ipairs(_M.binops) do
+        for _,f in ipairs(_M.binops) do
             if (string.sub(f.op,1,k) == st) then
                 -- matches something
                 matched = true
@@ -870,8 +856,6 @@ end
 
 local function parse_rpn( lexpr, expr, index, lprec )
     D("parse_rpn: parsing %1 from %2 prec %3 lhs %4", expr, index, lprec, lexpr)
-    local len = string.len(expr)
-    local stack = {}
     local binop, rexpr, lop, ilast
 
     ilast = index
@@ -929,7 +913,6 @@ local function check_operand( v1, allow1, v2, allow2 )
         elseif base.type(allow1) ~= "table" then
             error("invalid allow1") -- bug, only string and array allowed
         else
-            local t
             res = false
             for _,t in ipairs(allow1) do
                 if vt == t then
@@ -1027,7 +1010,7 @@ _run = function( ce, ctx, stack )
     if (ce == nil) then evalerror("Invalid input for argument 1") end
     if stack == nil then stack = {} end
     local index = 1
-    local len = table.getn(ce)
+    local len = #ce
     while (index <= len) do
         local v = nil
         local e = ce[index]
@@ -1150,7 +1133,6 @@ _run = function( ce, ctx, stack )
             elseif e.op == '=' then
                 D("_run: making assignment to %1", v1.name)
                 -- Can't make assignment to reserved words
-                local j
                 for j in pairs(reservedWords) do
                     if j == v1.name:lower() then evalerror("Can't assign to reserved word " .. j, e.pos) end
                 end
@@ -1198,7 +1180,7 @@ _run = function( ce, ctx, stack )
             -- Function reference
             D("_run: Handling function %1 with %2 args passed", e.name, #e.args)
             -- Parse our arguments and put each on the stack; push them in reverse so they pop correctly (first to pop is first passed)
-            local n, v1, argv
+            local v1, argv
             local argc = #e.args
             argv = {}
             for n=1,argc do
@@ -1252,7 +1234,7 @@ _run = function( ce, ctx, stack )
         table.insert(stack, 1, v) -- at start of array
         index = index + 1
     end
-    D("_run: finished, stack has %1: %2", table.getn(stack), stack)
+    D("_run: finished, stack has %1: %2", #stack, stack)
     if #stack then
         return fetch(stack, ctx) -- return first element. Maybe return multiple some day???
     end
@@ -1263,7 +1245,7 @@ end
 
 -- Compile the expression (public method)
 function _M.compile( expressionString )
-    local s,v,n
+    local s,v,n -- n???
     s,v,n = pcall(_comp, expressionString)
     if (s) then
         return  { rpn = v, source = expressionString }
@@ -1294,7 +1276,7 @@ end
 -- after compile(); if used after run(), returns evaluation error (location is meaningless).
 function _M.getLastError( compiledExpression )
     -- Eventually, return the error message and index within the string of where things went wrong
-    return "some future error message", 0
+    return "some future error message???", 0
 end
 
 -- Special exports
