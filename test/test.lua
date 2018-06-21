@@ -89,6 +89,8 @@ local function eval(s, expected, failExpect, comment)
             mm = string.format("(RUNTIME ERROR) %s", tostring(err))
             errmsg = err
         end
+    elseif r == L.NULL then
+        mm = string.format("(luaxp)NULL")
     else    
         mm = string.format("(%s)%s", type(r), L.dump(r)) 
     end
@@ -345,6 +347,12 @@ local function doStringFuncTests()
 end
 
 local function doMiscFuncTests()
+    eval("if(1==1,\"true\",\"false\")", "true")
+    eval("if(7==8,\"true\",\"false\")", "false")
+    eval("if(null,\"true\",\"false\")", "false")
+    eval("if(7==8,\"true\")", L.NULL)
+    eval("if(1==1,null,123)", L.NULL)
+
     eval("choose(3,\"default\",\"A\",\"B\",\"C\",\"D\")", "C")
     eval("choose(9,\"default\",\"A\",\"B\",\"C\",\"D\")", "default")
     
@@ -380,7 +388,8 @@ local function doMiscSyntaxTests()
     if ctx.response ~= nil then
         ctx.response['bad name!'] = ctx.response.loadtime
         eval("['response'].['bad name!']", ctx.response.loadtime, nil, "Quoted identifiers allow chars otherwise not permitted")
-        eval("response.notthere", nil, "Subreference not found")
+        eval("response.notthere", L.NULL)
+        eval("response.notthere.reallynotthere", nil, "Can't reference through null")
         eval("select( response.rooms, 'id', '14' ).name", "Front Porch")
     else
         skip("['response'].['loadtime']", "JSON data not loaded")

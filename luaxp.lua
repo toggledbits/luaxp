@@ -487,7 +487,7 @@ local nativeFuncs = {
     , ['select'] = { nargs = 3, impl = function( argv ) return xp_select(argv[1],argv[2],argv[3]) end }
     , ['keys'] = { nargs = 1, impl = function( argv ) return xp_keys( argv[1] ) end }
     , ['iterate'] = { nargs = 2, impl = function( argv ) return xp_iter( argv.__context, argv[1], argv[2], argv[3] ) end }
-    , ['if'] = { nargs = 2, impl = function( argv ) if argv[1] then return argv[2] or NULLATOM else return argv[3] or NULLATOM end end }
+    , ['if'] = { nargs = 2, impl = function( argv ) if argv[1]~=nil and argv[1]~=NULLATOM and argv[1] then return argv[2] or NULLATOM else return argv[3] or NULLATOM end end }
     , ['void'] = { nargs = 0, impl = function( argv ) return NULLATOM end }
     , ['list'] = { nargs = 0, impl = function( argv ) local b = deepcopy( argv ) b.__context=nil return b end }
     , ['first'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if base.type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[1] end end }
@@ -1042,7 +1042,8 @@ _run = function( ce, ctx, stack )
             D("_run: operands are %1, %2", v1, v2)
             if (e.op == '.') then
                 D("_run: descend to %1", v2)
-                if isAtom(v1) then evalerror("Invalid reference") end
+                if isNull(v1) then evalerror("Can't reference through null") end
+                if isAtom(v1) then evalerror("Invalid type in reference") end
                 if not check_operand(v1, "table") then evalerror("Cannot subreference a " .. base.type(v1), e.pos) end
                 if not isAtom( v2, VREF ) then evalerror("Invalid subreference", e.pos) end
                 if (v2.name or "") == "" and v2.index ~= nil then
@@ -1059,7 +1060,10 @@ _run = function( ce, ctx, stack )
                     v = v[ix]
                     if v == nil then evalerror("Subscript out of range: " .. tostring(v2.name) .. "[" .. ix .. "]", v2.pos) end
                 end
-                if v == nil then evalerror("Subreference not found: " .. tostring(v2.name), v2.pos) end
+                if v == nil then 
+                    -- Convert nil to NULL (not error, yet--depends on what expression does with it)
+                    v = NULLATOM
+                end
             elseif (e.op == '+') then
                 -- Special case for +, if either operand is a string, treat as concatenation
                 if base.type(v1) == "string" or base.type(v2) == "string" then
@@ -1284,6 +1288,7 @@ _M.dump = dump
 _M.isNull = isNull
 _M.coerce = coerce
 _M.NULL = NULLATOM
+_M.null = NULLATOM
 _M.evalerror = evalerror
 
 return _M
