@@ -1,4 +1,11 @@
-require("json")
+-- Find the luaxp we're going to test
+local moduleName = arg[1] or "luaxp"
+local L = require(moduleName)
+
+local json = require("json")
+if json == nil then json = require('dkjson') end
+
+local testData = arg[2] or "test/testdata.json"
 
 local mt = getmetatable(_G)
 if mt == nil then
@@ -33,9 +40,6 @@ end
 local function debugPrint( msg )
     print(string.char(27) .. "[0;34;40m" .. msg .. string.char(27) .. "[0m") -- debug in blue
 end
-
-local L = require("luaxp")
-
 -- Uncomment the line below to enable debugging
 -- L._DEBUG = debugPrint
 
@@ -85,6 +89,8 @@ local function eval(s, expected, failExpect, comment)
             mm = string.format("(RUNTIME ERROR) %s", tostring(err))
             errmsg = err
         end
+    elseif r == L.NULL then
+        mm = string.format("(luaxp)NULL")
     else    
         mm = string.format("(%s)%s", type(r), L.dump(r)) 
     end
@@ -341,8 +347,23 @@ local function doStringFuncTests()
 end
 
 local function doMiscFuncTests()
+    eval("if(1==1,\"true\",\"false\")", "true")
+    eval("if(7==8,\"true\",\"false\")", "false")
+    eval("if(null,\"true\",\"false\")", "false")
+    eval("if(7==8,\"true\")", L.NULL)
+    eval("if(1==1,null,123)", L.NULL)
+
     eval("choose(3,\"default\",\"A\",\"B\",\"C\",\"D\")", "C")
     eval("choose(9,\"default\",\"A\",\"B\",\"C\",\"D\")", "default")
+    
+    eval("#list(1,2,3,4,5,9)", 6, nil, "Returns table of six elements")
+    eval("list(time(),strftime('%c',time()))", nil, nil, "Returns two-element array with timestamp and string time")
+    eval("first(list('dog','cat','mouse',time(),upper('leaf')))", "dog")
+    eval("first(list())", L.NULL, nil, "First element of empty list returns null")
+    eval("last(list('dog','cat','mouse',time(),upper('leaf')))", "LEAF")
+    eval("last(list())", L.NULL, nil, "Last element of empty list returns null")
+    eval("last('cat')", L.NULL, nil, "Invalid data returns null", "Test constant")
+    eval("last(tonumber('123'))", L.NULL, nil, "Invalid data returns null", "Test expression")
     
     if ctx.response ~= nil then
         eval("#keys(response.rooms)", 23)
@@ -367,7 +388,8 @@ local function doMiscSyntaxTests()
     if ctx.response ~= nil then
         ctx.response['bad name!'] = ctx.response.loadtime
         eval("['response'].['bad name!']", ctx.response.loadtime, nil, "Quoted identifiers allow chars otherwise not permitted")
-        eval("response.notthere", nil, "Subreference not found")
+        eval("response.notthere", L.NULL)
+        eval("response.notthere.reallynotthere", nil, "Can't reference through null")
         eval("select( response.rooms, 'id', '14' ).name", "Front Porch")
     else
         skip("['response'].['loadtime']", "JSON data not loaded")
@@ -413,19 +435,24 @@ local function doNullTests()
 end
 
 local function doRegressionTests()
-    -- For this test, save current context and use special.
+    local t = ctx -- save current context
+
+    -- For this test, use special context.
     local s = '{"coord":{"lon":-84.56,"lat":33.39},"weather":[{"id":800,"main":"Clear","description":"clear sky","icon":"01d"}],"base":"stations","main":{"temp":281.29,"pressure":1026,"humidity":23,"temp_min":278.15,"temp_max":285.15},"visibility":16093,"wind":{"speed":5.1,"deg":150},"clouds":{"all":1},"dt":1517682900,"sys":{"type":1,"id":789,"message":0.0041,"country":"US","sunrise":1517661125,"sunset":1517699557},"id":0,"name":"Peachtree City","cod":200}'
-    local t = ctx
     ctx = { response = json.decode(s) }
     eval("response.weather[1].description", "clear sky")
+    
+    -- Special context here as well.
+    ctx = json.decode('{"val":8,"ack":true,"ts":1517804967381,"q":0,"from":"system.adapter.mihome-vacuum.0","lc":"xyz","_id":"mihome-vacuum.0.info.state","type":"state","common":{"name":"Vacuum state","type":"number","read":true,"max":30,"states":{"1":"Unknown 1","2":"Sleep no Charge","3":"Sleep","5":"Cleaning","6":"Returning home","7":"Manuell mode","8":"Charging","10":"Paused","11":"Spot cleaning","12":"Error?!"}},"native":{}}')
+    ctx = { response=ctx }
+    eval("response.val", 8, nil, "Specific test for atom mis-identification (issue X) discovered by SiteSensor user")
+    
     ctx = t -- restore prior context
 end
 
 -- Load JSON data into context, if we can.
-local json = require("json")
-if json == nil then json = require('dkjson') end
 if json then
-    local file = io.open("test/testdata.json", "r")
+    local file = io.open( testData, "r" )
     if file then
         local s = file:read("*all")
         file:close()
@@ -450,7 +477,7 @@ doMiscFuncTests()
 doRegressionTests()
 
 print("")
-print(string.format("Ran %d tests, %d skipped, %d errors.", nTest, nSkip, nErr))
+print(string.format("Using module %s, ran %d tests, %d skipped, %d errors.", moduleName, nTest, nSkip, nErr))
 if ctx.response == nil then
     print(RED.."JSON data not loaded, some tests skipped"..RESET)
 end
