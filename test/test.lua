@@ -415,6 +415,13 @@ local function doMiscSyntaxTests()
     eval("doublestring('galaxy')", "galaxygalaxy", nil, "Test custom function in __functions table (preferred)")
     ctx.dubstr = ctx.__functions.doublestring
     eval("dubstr('planet')", "planetplanet", nil, "Test custom function in context root (deprecated)")
+    
+    -- External resolver
+    ctx.__functions = { __resolve = function( name, ctx ) if name == "MagicName" then return "Magic String" else return nil end end }
+    eval("MagicName+' was found'", "Magic String was found", nil, "Test last-resort resolver (name found)")
+    eval("PlainName", nil, "Undefined variable", "Test last-resort resolver (name not found)")
+    
+    ctx.__functions = nil
 end
 
 local function doNullTests()

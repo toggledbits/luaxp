@@ -11,6 +11,7 @@
 local _M = {}
 
 _M._VERSION = "0.9.6dev"
+_M._VNUMBER = 000906
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
@@ -368,9 +369,9 @@ local function xp_parse_time( t )
     if hasTZ then
         -- If there's a timezone spec, apply it. Otherwise we assume time was in current (system) TZ
         -- and leave it unmodified.
-        local loctime = os.date("*t")
+        -- local loctime = os.date("*t")
         local epoch = { year=1970, month=1, day=1, hour=0 }
-        if loctime.isdst then epoch.isdst = true end
+        -- if loctime.isdst then epoch.isdst = true end
         local locale_offset = os.time( epoch )
         tm = tm - locale_offset -- back to UTC, because conversion assumes current TZ, so undo that.
         tm = tm - ( offset * 60 ) -- apply specified offset
@@ -987,6 +988,11 @@ local function fetch( stack, ctx )
             v = ctx.__lvars[e.name]
         else
             v = ctx[e.name]
+        end
+        -- If no value so far, check if external resolver is available; use if available.
+        if v == nil and (ctx.__functions or {}).__resolve ~= nil then
+            D("fetch: calling external resolver for %1", e.name)
+            v = ctx.__functions.__resolve( e.name, ctx )
         end
         if (v == nil) then evalerror("Undefined variable: " .. e.name, e.pos) end
         -- Apply array index if present
