@@ -41,7 +41,7 @@ local function debugPrint( msg )
     print(string.char(27) .. "[0;34;40m" .. msg .. string.char(27) .. "[0m") -- debug in blue
 end
 -- Uncomment the line below to enable debugging
--- L._DEBUG = debugPrint
+L._DEBUG = debugPrint
 
 local ctx = {}
 local nTest = 0
@@ -276,6 +276,22 @@ local function doBooleanOpsTests()
     eval("'false'^'false'", false)
     eval("'false'^'true'", true)
     eval("'true'^'true'", false)
+    eval("true && true", true)
+    eval("true && false", false)
+    eval("false && true", false)
+    eval("true || true", true)
+    eval("true || false", true)
+    eval("false || false", false)
+    eval("true and true", true)
+    eval("true and false", false)
+    eval("false and true", false)
+    eval("true or true", true)
+    eval("true or false", true)
+    eval("false or false", false)
+    eval("true and true or false", true)
+    eval("true and false or false", false)
+    eval("true and 'yes' or 'no'", "yes")
+    eval("false and 'yes' or 'no'", "no")
 end
 
 local function doMathFuncTests()
@@ -298,7 +314,7 @@ local function doMathFuncTests()
     eval("sqrt(2)/2")
     eval("sin(45 * pi / 180)", nil, nil, "The result should be about sqrt(2)/2 = 0.707...")
     eval("floor(123)",123)
-    eval("floor(0.123*1000)", 123.0, nil, "There is a known rounding error that needs to be resolved here")
+    eval("floor(0.123*1000)", 123.0, nil, "There is a known Lua rounding error here, but == comparisons on floats are always dangerous in any language")
     eval("floor(1.8)", 1)
     eval("floor(1.2)", 1)
     eval("floor(-1.2)", -2)
@@ -389,12 +405,18 @@ local function doMiscSyntaxTests()
         ctx.response['bad name!'] = ctx.response.loadtime
         eval("['response'].['bad name!']", ctx.response.loadtime, nil, "Quoted identifiers allow chars otherwise not permitted")
         eval("response.notthere", L.NULL)
-        eval("response.notthere.reallynotthere", nil, "Can't reference through null")
+        eval("response.notthere.reallynotthere", nil, "Can't dereference through null")
+        ctx.__options = { nullderefnull=true }
+            eval("response.notthere", L.NULL, nil, "with nullderefnull set")
+            eval("response.notthere.reallynotthere", L.NULL, nil, "nullderefnull")
+        ctx.__options = nil
         eval("select( response.rooms, 'id', '14' ).name", "Front Porch")
     else
         skip("['response'].['loadtime']", "JSON data not loaded")
         skip("response.notthere", "JSON data not loaded")
         skip("select( response.rooms, 'id', '14' ).name", "JSON data not loaded")
+        skip("response.notthere.reallynotthere", nil, "Can't dereference through null")
+        skip("select( response.rooms, 'id', '14' ).name", "Front Porch")
     end
 
     -- Syntax abuse
@@ -405,7 +427,13 @@ local function doMiscSyntaxTests()
     eval("+", nil, "Expected operand")
 
     -- Array subscripts
-    ctx.array={11,22,33,44,55} eval("array[4]", 44) eval("array[19]", nil, "out of range")
+    ctx.array={11,22,33,44,55} 
+        eval("array[4]", 44) 
+        eval("array[19]", nil, "out of range")
+        ctx.__options = { subscriptmissnull=true }
+        eval("array[19]", L.NULL, nil, "with 'subscriptmissnull' set")
+    ctx.array = nil ctx.__options = nil
+    
     eval("true.val", nil, "Cannot subreference")
     eval("true[1]", nil, "not an array")
     eval("ff(1, )", nil, "Invalid subexpr") eval("ff( ,1)", nil, "Invalid subexpr")
@@ -439,6 +467,7 @@ local function doNullTests()
     eval("null==true", false)
     eval("null==false", true)
     eval("null==''", true)
+    eval("len(null)", 0, nil, "The length of null is zero.")
 end
 
 local function doRegressionTests()
