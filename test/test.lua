@@ -1,10 +1,12 @@
 -- Find the luaxp we're going to test
 local moduleName = arg[1] or "luaxp"
 local L = require(moduleName)
-
 local json = require("json")
-if json == nil then json = require('dkjson') end
 
+-- FOCUSTEST, when set, debug on for specific test number
+FOCUSTEST = 0
+
+-- Load Test Data
 local testData = arg[2] or "test/testdata.json"
 
 local mt = getmetatable(_G)
@@ -41,7 +43,7 @@ local function debugPrint( msg )
     print(string.char(27) .. "[0;34;40m" .. msg .. string.char(27) .. "[0m") -- debug in blue
 end
 -- Uncomment the line below to enable debugging
-L._DEBUG = debugPrint
+--L._DEBUG = debugPrint
 
 local ctx = {}
 local nTest = 0
@@ -75,10 +77,11 @@ end
      any other message.
 --]]
 local function eval(s, expected, failExpect, comment)
+    local pdebug
     nTest = nTest + 1
-    if nTest == 999 then L._DEBUG = debugPrint end
+    if nTest == FOCUSTEST then pdebug = L._DEBUG ; L._DEBUG = debugPrint end
     local r,err = L.evaluate(s, ctx)
-    L._DEBUG = false
+    L._DEBUG = pdebug
     local mm, errmsg
     if r == nil then
         -- There was an error
@@ -384,12 +387,30 @@ local function doMiscFuncTests()
     if ctx.response ~= nil then
         eval("#keys(response.rooms)", 23)
         eval("i=''", "",nil,"Setup for next test") 
+        eval("iterate(list(1,2,3,4,5,6), '_' )", nil, nil, "Returns array of 6 elements")
+        eval("iterate(list(1,2,3,4,5,6), _ )", nil, nil, "Returns array of 6 elements; same result as previous")
         eval("#iterate(response.rooms,'void(i = i + \",\" + _.name)')", 0, nil, "Iterator using anonymous upvalue and empty result array")
         eval("#i", 254, nil, "Expected length of string may change if data altered")
         eval('#iterate(response.devices,"if(device.room==10,device.id)","device")', 7, nil, "Expected number of matching rooms may change if data altered")
+        eval('#iterate(response.devices, if(device.room==10,device.id) , "device" )', 7, nil, "Expected number of matching rooms may change if data altered")
     else
-        nSkip = nSkip + 5
+        nSkip = nSkip + 9
     end
+    
+    eval("i=list('A','B','C','D')", nil, nil, "Setup for next test")
+    eval("i[2]='X'", 'X', nil, "Array assignment")
+    eval("i[2]", "X", nil)
+    eval("#i", 4, nil)
+    eval("i", nil, nil, "Array result")
+    eval("k=4", 4, nil, "Setup for next test")
+    eval("i[k]", "D", nil, "Array index vref")
+    eval("i[k-1]", "C", nil, "Array index expression")
+    
+    --[[ Not yet, maybe some day
+    eval("Z=list()", nil, nil, "Set up for next test")
+    eval("Z.abc=123", 123, nil, "Subref assignment")
+    eval("Z.abc", 123, nil, "Subref assignment check")
+    --]]
 end
 
 local function doMiscSyntaxTests()    
@@ -477,6 +498,8 @@ local function doRegressionTests()
     local s = '{"coord":{"lon":-84.56,"lat":33.39},"weather":[{"id":800,"main":"Clear","description":"clear sky","icon":"01d"}],"base":"stations","main":{"temp":281.29,"pressure":1026,"humidity":23,"temp_min":278.15,"temp_max":285.15},"visibility":16093,"wind":{"speed":5.1,"deg":150},"clouds":{"all":1},"dt":1517682900,"sys":{"type":1,"id":789,"message":0.0041,"country":"US","sunrise":1517661125,"sunset":1517699557},"id":0,"name":"Peachtree City","cod":200}'
     ctx = { response = json.decode(s) }
     eval("response.weather[1].description", "clear sky")
+    eval("if( response.fuzzball==null, 'NO DATA', response.fuzzball.description )", "NO DATA", nil, "Late eval")
+    eval("if( response['fuzzball']==null, 'NO DATA', response.fuzzball.description )", "NO DATA", nil, "Late eval")
     
     -- Special context here as well.
     ctx = json.decode('{"val":8,"ack":true,"ts":1517804967381,"q":0,"from":"system.adapter.mihome-vacuum.0","lc":"xyz","_id":"mihome-vacuum.0.info.state","type":"state","common":{"name":"Vacuum state","type":"number","read":true,"max":30,"states":{"1":"Unknown 1","2":"Sleep no Charge","3":"Sleep","5":"Cleaning","6":"Returning home","7":"Manuell mode","8":"Charging","10":"Paused","11":"Spot cleaning","12":"Error?!"}},"native":{}}')
