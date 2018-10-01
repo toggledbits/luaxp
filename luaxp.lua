@@ -46,6 +46,7 @@ local string = require("string")
 local math = require("math")
 local base = _G
 
+local CONST = 'const'
 local VREF = 'vref'
 local FREF = 'fref'
 local UNOP = 'unop'
@@ -100,7 +101,7 @@ local function D(s, ...)
 end
 
 -- Forward declarations
-local _comp, _run, scan_token
+local _comp, _run, runfetch, scan_token
 
 -- Utility functions
 
@@ -128,12 +129,12 @@ local function isNull( v )
 end
 
 local function comperror(msg, loc)
-    -- print("throwing comperror at " .. tostring(loc) .. ": " .. tostring(msg))
+    D("throwing comperror at %1: %2", loc, msg)
     return error( { __source='luaxp', ['type']='compile', location=loc, message=msg } )
 end
 
 local function evalerror(msg, loc)
-    -- print("throwing evalerror at " .. tostring(loc) .. ": " .. tostring(msg))
+    D("throwing evalerror at %1: %2", loc, msg)
     return error( { __source='luaxp', ['type']='evaluation', location=loc, message=msg } )
 end
 
@@ -442,23 +443,6 @@ local function xp_keys( arr )
     return r
 end
 
-local function xp_iter( ctx, arr, iter, nom )
-    D("xp_iter(ctx,arr,%3,%4)", ctx, arr, iter, nom)
-    if ctx == nil then ctx = {} end
-    if base.type( arr ) ~= "table" then evalerror("Array/table required") end
-    local r = {}
-    local ce = _comp( tostring(iter), ctx )
-    for _,v in pairs( arr ) do
-        ctx[nom or "_"] = v
-        D("xp_iter() evaluate %1 against %2", iter, v)
-        local t = _run( ce, ctx )
-        if t ~= nil and not isNull(t) then
-            table.insert( r, t )
-        end
-    end
-    return r
-end
-
 local function xp_tlen( t )
     local n = 0
     for _,v in pairs(t) do n = n + 1 end
@@ -499,8 +483,8 @@ local nativeFuncs = {
     , ['choose'] = { nargs = 2, impl = function( argv ) local ix = argv[1] if ix < 1 or ix > (#argv-2) then return argv[2] else return argv[ix+2] end end }
     , ['select'] = { nargs = 3, impl = function( argv ) return xp_select(argv[1],argv[2],argv[3]) end }
     , ['keys'] = { nargs = 1, impl = function( argv ) return xp_keys( argv[1] ) end }
-    , ['iterate'] = { nargs = 2, impl = function( argv ) return xp_iter( argv.__context, argv[1], argv[2], argv[3] ) end }
-    , ['if'] = { nargs = 2, impl = function( argv ) if argv[1]~=nil and argv[1]~=NULLATOM and argv[1] then return argv[2] or NULLATOM else return argv[3] or NULLATOM end end }
+    , ['iterate'] = { nargs = 2, impl = true }
+    , ['if'] = { nargs = 2, impl = true }
     , ['void'] = { nargs = 0, impl = function( argv ) return NULLATOM end }
     , ['list'] = { nargs = 0, impl = function( argv ) local b = deepcopy( argv ) b.__context=nil return b end }
     , ['first'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if base.type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[1] end end }
@@ -612,7 +596,7 @@ local function scan_numeric( expr, index )
     end
     -- Return result
     D("scan_numeric returning index=%1, val=%2", index, val)
-    return index, val
+    return index, { __type=CONST, value=val }
 end
 
 -- Parse a string. Trivial at the moment and needs escaping of some kind
@@ -632,7 +616,7 @@ local function scan_string( expr, index )
         elseif (i == qchar) then
             -- PHR??? Should we do the double char style of quoting? don''t won''t ??
             index = index + 1
-            return index, st
+            return index, { __type=CONST, value=st }
         end
         st = st .. i
         index = index + 1
@@ -650,6 +634,7 @@ local function scan_fref( expr, index, name )
     local parenLevel = 1
     local ch
     local subexp = ""
+    index = skip_white( expr, index )
     while ( true ) do
         if ( index > len ) then return comperror("Unexpected end of argument list", index) end -- unexpected end of argument list
 
@@ -674,10 +659,10 @@ local function scan_fref( expr, index, name )
                 index = index + 1
             end
         elseif ch == "'" or ch == '"' then
-            -- Start of string? Swallow it whole and append it to our subexpression
+            -- Start of string?
             local qq = ch
             index, ch = scan_string( expr, index )
-            subexp = subexp .. qq .. ch .. qq
+            subexp = subexp .. qq .. ch.value .. qq
         elseif (ch == ',' and parenLevel == 1) then -- completed subexpression
             subexp = xp_trim( subexp )
             D("scan_fref: handling argument=%1", subexp)
@@ -786,7 +771,7 @@ local function scan_unop( expr, index )
         index = index + 1
         local k, r = scan_token( expr, index )
         if (r == nil) then return k, r end
-        return k, { r, { __type=UNOP, op=ch, pos=index } }
+        return k, { __type=UNOP, op=ch, pos=index, operand=r }
     end
     return index, nil -- Not a UNOP
 end
@@ -893,7 +878,9 @@ local function parse_rpn( lexpr, expr, index, lprec )
             index, lop = scan_binop( expr, index )
             D("parse_rpn: inside lookahead is %1", lop)
         end
-        lexpr = { lexpr, rexpr, binop }
+        binop.lexpr = lexpr
+        binop.rexpr = rexpr
+        lexpr = binop
     end
     D("parse_rpn: returning index %1 lhs %2", ilast, lexpr)
     return ilast, lexpr
@@ -910,7 +897,7 @@ _comp = function( expr )
 
     index,lhs = scan_token( expr, index )
     index,lhs = parse_rpn( lhs, expr, index, MAXPREC )
-    return { lhs }
+    return lhs
 end
 
 -- Better version, checks one or two operands (AND logic result)
@@ -963,7 +950,7 @@ local function coerce(val, typ)
         elseif vt == "boolean" and not val then return 0
         elseif vt == "string" then
             local n = tonumber(val,10)
-            if n ~= nil then return n else evalerror("Coersion of " .. tostring(val) .. " from string to number failed") end
+            if n ~= nil then return n else evalerror("Coersion from string to number failed ("..val..")") end
         end
         -- null coerces to NaN? We don't have NaN. Yet...
     end
@@ -983,10 +970,15 @@ local function getOption( ctx, name )
     return ((ctx or {}).__options or {})[name] and true or false
 end
 
+local function pop( stack )
+    if #stack == 0 then return nil end
+    return table.remove( stack )
+end
+
 -- Pop an item off the stack. If it's a variable reference, resolve it now.
 local function fetch( stack, ctx )
     local v
-    local e = table.remove( stack, 1 )
+    local e = pop( stack )
     if e == nil then evalerror("Missing expected operand") end
     D("fetch() popped %1", e)
     if isAtom( e, VREF ) then
@@ -994,13 +986,13 @@ local function fetch( stack, ctx )
         -- A bit of a kludge. If name is empty but index is defined, we have a quoted reference
         -- such as ['response'], which allows access to identifiers with special characters.
         if ( e.name or "" ) == "" and e.index ~= nil then
-            e.name = _run(e.index, ctx, stack)
+            e.name = runfetch(e.index, ctx, stack)
             e.index = nil
         end
         if reservedWords[e.name:lower()] ~= nil then
             D("fetch: found reserved word %1 for VREF", e.name)
             v = reservedWords[e.name:lower()]
-        elseif ctx.__lvars ~= nil and ctx.__lvars[e.name] ~= nil then
+        elseif (ctx.__lvars or {})[e.name] ~= nil then
             v = ctx.__lvars[e.name]
         else
             v = ctx[e.name]
@@ -1014,15 +1006,19 @@ local function fetch( stack, ctx )
         -- Apply array index if present
         if (e.index ~= nil) then
             if base.type(v) ~= "table" then evalerror(e.name .. " is not an array", e.pos) end
-            local ix = _run(e.index, ctx, {}) -- runs same context, separate stack
+            local ix = runfetch(e.index, ctx, stack)
             D("fetch: applying subscript: %1[%2]", e.name, ix)
             if ix ~= nil then
                 v = v[ix]
                 if v == nil then
-                    if getOption( ctx, "subscriptmissnull" ) then
-                        v = NULLATOM
+                    if type(ix) == "number" then
+                        if getOption( ctx, "subscriptmissnull" ) then
+                            v = NULLATOM
+                        else
+                            evalerror("Subscript " .. ix .. " out of range for " .. e.name, e.pos)
+                        end
                     else
-                        evalerror("Subscript " .. ix .. " out of range for " .. e.name, e.pos)
+                        v = NULLATOM
                     end
                 end
             else
@@ -1034,292 +1030,319 @@ local function fetch( stack, ctx )
     return e
 end
 
-_run = function( ce, ctx, stack )
-    if (ce == nil or #ce==0) then evalerror("Invalid input for argument 1") end
-    if stack == nil then stack = {} end
-    local index = 1
-    local len = #ce
-    while (index <= len) do
-        local v = nil
-        local e = ce[index]
-        D("_run: next element is %1", e)
-        if ( base.type(e) == "number" or base.type(e) == "string" ) then
-            D("_run: direct value assignment for (%1)%2", base.type(e), e)
-            v = e
-        elseif base.type(e) == "table" and not isAtom(e) then
-            D("_run: subexpression %1", e)
-            v = _run( e, ctx, stack )
-        elseif isAtom( e, BINOP ) then
-            D("_run: handling BINOP %1", e.op)
-            local v2
-            if e.op == 'and' or e.op == '&&' or e.op == 'or' or e.op == '||' then
-                v2 = table.remove( stack, 1 )
-                D("_run: logical lookahead is %1", v2)
-            elseif e.op == '.' then
-                v2 = table.remove( stack, 1 )
-                D("_run: subref lookahead is %1", v2)
-            else
-                v2 = fetch(stack, ctx) -- something else, evaluate it.
-            end
-            local v1
-            if e.op == '=' then
-                -- Must be vref (can't assign to anything else). Special pop il lieu of fetch().
-                v1 = table.remove( stack, 1 )
-                D("_run: assignment lookahead is %1", v1)
-                if not isAtom( v1, VREF ) then evalerror("Invalid assignment", e.pos) end
-            else
-                v1 = fetch(stack, ctx)
-            end
-            D("_run: operands are %1, %2", v1, v2)
-            if e.op == '.' then
-                D("_run: descend to %1", v2)
-                if isNull(v1) then
-                    if getOption( ctx, "nullderefnull" ) then
-                        v = NULLATOM
-                    else
-                        evalerror("Can't dereference through null", e.pos)
-                    end
+runfetch = function( atom, ctx, stack )
+    _run( atom, ctx, stack )
+    return fetch( stack, ctx )
+end
+
+_run = function( atom, ctx, stack )
+    if not isAtom( atom ) then D("Invalid atom: %1", atom) evalerror("Invalid atom") end
+    stack = stack or {}
+    local v = nil
+    local e = atom
+    D("_run: next element is %1", e)
+    if ( base.type(e) == "number" or base.type(e) == "string" ) then
+        D("_run: direct value assignment for (%1)%2", base.type(e), e)
+        v = e
+    elseif isAtom( e, CONST ) then
+        D("_run: handling const %1", e.value)
+        v = e.value
+    elseif isAtom( e, BINOP ) then
+        D("_run: handling BINOP %1", e.op)
+        local v2
+        if e.op == 'and' or e.op == '&&' or e.op == 'or' or e.op == '||' then
+            v2 = e.rexpr
+            D("_run: logical lookahead is %1", v2)
+        elseif e.op == '.' then
+            v2 = e.rexpr
+            D("_run: subref lookahead is %1", v2)
+        else
+            v2 = runfetch( e.rexpr, ctx, stack ) -- something else, evaluate it now
+        end
+        local v1
+        if e.op == '=' then
+            -- Must be vref (can't assign to anything else). Special pop il lieu of fetch().
+            v1 = e.lexpr
+            D("_run: assignment lookahead is %1", v1)
+            if not isAtom( v1, VREF ) then evalerror("Invalid assignment", e.pos) end
+        else
+            v1 = runfetch( e.lexpr, ctx, stack )
+        end
+        D("_run: operands are %1, %2", v1, v2)
+        if e.op == '.' then
+            D("_run: descend to %1", v2)
+            if isNull(v1) then
+                if getOption( ctx, "nullderefnull" ) then
+                    v = NULLATOM
                 else
-                    if isAtom(v1) then evalerror("Invalid type in reference") end
-                    if not check_operand(v1, "table") then evalerror("Cannot subreference a " .. base.type(v1), e.pos) end
-                    if not isAtom( v2, VREF ) then evalerror("Invalid subreference", e.pos) end
-                    if (v2.name or "") == "" and v2.index ~= nil then
-                        -- Handle ['reference'] form of vref... name is in index
-                        v2.name = _run( v2.index, ctx, stack )
-                        v2.index = nil
-                    end
-                    v = v1[v2.name]
-                    if v2.index ~= nil then
-                        -- Handle subscript in tree descent
-                        local ix = _run(v2.index, ctx, {})
-                        D("_run: applying subscript [%1] in descent to %2", ix, v2.name)
-                        if ix == nil then evalerror("Subscript evaluation failed for " .. v2.name, v2.pos) end
-                        v = v[ix]
-                        if v == nil then
-                            if getOption( ctx, "subscriptmissnull" ) then
-                                v = NULLATOM
-                            else
-                                evalerror("Subscript out of range: " .. tostring(v2.name) .. "[" .. ix .. "]", v2.pos)
-                            end
+                    evalerror("Can't dereference through null", e.pos)
+                end
+            else
+                if isAtom(v1) then evalerror("Invalid type in reference") end
+                if not check_operand(v1, "table") then evalerror("Cannot subreference a " .. base.type(v1), e.pos) end
+                if not isAtom( v2, VREF ) then evalerror("Invalid subreference", e.pos) end
+                if (v2.name or "") == "" and v2.index ~= nil then
+                    -- Handle ['reference'] form of vref... name is in index
+                    v2.name = runfetch( v2.index, ctx, stack )
+                    v2.index = nil
+                end
+                v = v1[v2.name]
+                if v2.index ~= nil then
+                    -- Handle subscript in tree descent
+                    if v == nil then evalerror("Can't index null", v2.pos) end
+                    local ix = runfetch(v2.index, ctx, stack)
+                    if ix == nil then evalerror("Subscript evaluation failed for " .. v2.name, v2.pos) end
+                    v = v[ix]
+                    if v == nil then
+                        if getOption( ctx, "subscriptmissnull" ) then
+                            v = NULLATOM
+                        else
+                            evalerror("Subscript out of range: " .. tostring(v2.name) .. "[" .. ix .. "]", v2.pos)
                         end
                     end
-                    if v == nil then
-                        -- Convert nil to NULL (not error, yet--depends on what expression does with it)
-                        v = NULLATOM
-                    end
                 end
-            elseif e.op == 'and' or e.op == '&&' then
-                if v1 == nil or not coerce(v1, "boolean") then
-                    D("_run: shortcut and/&& op1 is false")
-                    v = v1 -- shortcut lead expression if false (in "a and b", no need to eval b if a is false)
-                else
-                    D("_run: op1 for and/&& is true, evaluate op2=%1", v2)
-                    v = _run( { v2 }, ctx, {} )
-                end
-            elseif e.op == 'or' or e.op == '||' then
-                if v1 == nil or not coerce(v1, "boolean") then
-                    D("_run: op1 for or/|| false, evaluate op2=%1", v2)
-                    v = _run( { v2 }, ctx, {} )
-                else
-                    D("_run: shortcut or/|| op1 is true")
-                    v = v1 -- shortcut lead exp is true (in "a or b", no need to eval b if a is true)
-                end
-            elseif (e.op == '+') then
-                -- Special case for +, if either operand is a string, treat as concatenation
-                if base.type(v1) == "string" or base.type(v2) == "string" then
-                    v = coerce(v1, "string") .. coerce(v2, "string")
-                else
-                    v = coerce(v1, "number") + coerce(v2, "number")
-                end
-            elseif (e.op == '-') then
-                v = coerce(v1, "number") - coerce(v2, "number")
-            elseif (e.op == '*') then
-                v = coerce(v1, "number") * coerce(v2, "number")
-            elseif (e.op == '/') then
-                v = coerce(v1, "number") / coerce(v2, "number")
-            elseif (e.op == '%') then
-                v = coerce(v1, "number") % coerce(v2, "number")
-            elseif (e.op == '&') then
-                -- If both operands are numbers, bitwise; otherwise boolean
-                if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
-                    v = coerce(v1, "boolean") and coerce(v2, "boolean")
-                else
-                    v = bit.band( coerce(v1, "number"), coerce(v2, "number") )
-                end
-            elseif (e.op == '|') then
-                -- If both operands are numbers, bitwise; otherwise boolean
-                if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
-                    v = coerce(v1, "boolean") or coerce(v2, "boolean")
-                else
-                    v = bit.bor( coerce(v1, "number"), coerce(v2, "number") )
-                end
-            elseif (e.op == '^') then
-                -- If both operands are numbers, bitwise; otherwise boolean
-                if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
-                    v = coerce(v1, "boolean") ~= coerce(v2, "boolean")
-                else
-                    v = bit.bxor( coerce(v1, "number"), coerce(v2, "number") )
-                end
-            elseif (e.op == '<') then
-                if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
-                    .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
-                v = v1 < v2
-            elseif (e.op == '<=') then
-                if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
-                    .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
-                v = v1 <= v2
-            elseif (e.op == '>') then
-                if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
-                    .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
-                v = v1 > v2
-            elseif (e.op == '>=') then
-                if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
-                    .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
-                v = v1 >= v2
-            elseif (e.op == '==') then
-                if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
-                    v = coerce(v1, "boolean") == coerce(v2, "boolean")
-                elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
-                    -- Either is number and both have valid numeric representation, treat both as numbers
-                    -- That is 123 > "45" returns true
-                    v = coerce(v1, "number") == coerce(v2, "number")
-                else
-                    v = coerce(v1, "string") == coerce(v2, "string")
-                end
-            elseif (e.op == '<>' or e.op == '!=' or e.op == '~=') then
-                if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
-                    v = coerce(v1, "boolean") == coerce(v2, "boolean")
-                elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
-                    v = coerce(v1, "number") ~= coerce(v2, "number")
-                else
-                    v = coerce(v1, "string") ~= coerce(v2, "string")
-                end
-            elseif e.op == '=' then
-                D("_run: making assignment to %1", v1.name)
-                -- Can't make assignment to reserved words
-                for j in pairs(reservedWords) do
-                    if j == v1.name:lower() then evalerror("Can't assign to reserved word " .. j, e.pos) end
-                end
-                if ctx[v1.name] ~= nil then
-                    ctx[v1.name] = v2
-                else
-                    if ctx.__lvars == nil then ctx.__lvars = {} end
-                    ctx.__lvars[v1.name] = v2
-                end
-                v = v2
-            else
-                error("Bug: binop parsed but not implemented by evaluator, binop=" .. e.op, 0)
-            end
-        elseif isAtom( e, UNOP ) then
-            -- Get the operand
-            D("_run: handling unop, stack has %1", stack)
-            v = fetch(stack, ctx)
-            if (v == nil) then error("Stack underflow in unop eval", 0) end
-            if (e.op == '-') then
-                v = -coerce(v, "number")
-            elseif (e.op == '+') then
-                -- noop
-            elseif (e.op == '!') then
-                if base.type(v) == "number" then
-                    v = bit.bnot(v)
-                else
-                    v = not coerce(v, "boolean")
-                end
-            elseif e.op == '#' then
-                D("_run: # unop on %1", v)
-                local vt = base.type(v)
-                if vt == "string" then
-                    v = #v
-                elseif vt == "table" then
-                    v = xp_tlen( v )
-                elseif isNull(v) then
-                    v = 0
-                else
-                    v = 1
-                end
-            else
-                error("Bug: unop parsed but not implemented by evaluator, unop=" .. e.op, 0)
-            end
-        elseif isAtom( e, FREF ) then
-            -- Function reference
-            D("_run: Handling function %1 with %2 args passed", e.name, #e.args)
-            if e.name == "if" then
-                -- Special-case the if() function, which evaluates only the sub-expression needed based on the result of the first argument.
-                -- This allows, for example, test for null before attempting to reference through it, as in if( x, x.name, "no name" ),
-                -- because arguments are normally evaluated prior to calling the function implementation, but this would cause "x.name" to
-                -- be attempted, which would fail and throw an error if x is null.
-                if #e.args < 2 then evalerror("if() requires two or three arguments", e.pos) end
-                local v1 = _run( e.args[1], ctx, stack )
-                if v1 == nil or not coerce( v1, "boolean" ) then
-                    -- False
-                    v = #e.args > 2 and _run( e.args[3], ctx, stack ) or NULLATOM
-                else
-                    -- True
-                    v = _run( e.args[2], ctx, stack )
-                end
-            else
-                -- Parse our arguments and put each on the stack; push them in reverse so they pop correctly (first to pop is first passed)
-                local v1, argv
-                local argc = #e.args
-                argv = {}
-                for n=1,argc do
-                    v = e.args[n]
-                    D("_run: evaluate function argument %1: %2", n, v)
-                    v1 = _run(v, ctx, stack)
-                    if v1 == nil then v1 = NULLATOM end
-                    D("_run: adding argument result %1", v1)
-                    argv[n] = v1
-                end
-                -- Locate the implementation
-                local impl = nil
-                if nativeFuncs[e.name] ~= nil then
-                    D("_run: found native func %1", nativeFuncs[e.name])
-                    impl = nativeFuncs[e.name].impl
-                    if (argc < nativeFuncs[e.name].nargs) then evalerror("Insufficient arguments to " .. e.name .. "(), need " .. nativeFuncs[e.name].nargs .. ", got " .. argc, e.pos) end
-                end
-                if (impl == nil and ctx['__functions'] ~= nil) then
-                    impl = ctx['__functions'][e.name]
-                    D("_run: context __functions provides implementation")
-                end
-                if impl == nil then
-                    D("_run: context provides DEPRECATED-STYLE implementation")
-                    impl = ctx[e.name]
-                end
-                if (impl == nil) then evalerror("Unrecognized function: " .. e.name, e.pos) end
-                if (base.type(impl) ~= "function") then evalerror("Reference is not a function: " .. e.name, e.pos) end
-                -- Run the implementation
-                local status
-                D("_run: calling %1 with args=%2", e.name, argv)
-                argv.__context = ctx -- trickery
-                status, v = pcall(impl, argv)
-                D("_run: finished %1() call, status=%2, result=%3", e.name, status, v)
-                if not status then
-                    if base.type(v) == "table" and v.__source == "luaxp" then
-                        v.location = e.pos
-                        error(v) -- that one of our errors, just pass along
-                    end
-                    error("Execution of function " .. e.name .. "() threw an error: " .. tostring(v))
+                if v == nil then
+                    -- Convert nil to NULL (not error, yet--depends on what expression does with it)
+                    v = NULLATOM
                 end
             end
-        elseif isAtom( e, VREF ) then
-            D("_run: handling vref, name=%1, push to stack for later eval", e.name)
-            v = e -- we're going to push the VREF directly.
+        elseif e.op == 'and' or e.op == '&&' then
+            if v1 == nil or not coerce(v1, "boolean") then
+                D("_run: shortcut and/&& op1 is false")
+                v = v1 -- shortcut lead expression if false (in "a and b", no need to eval b if a is false)
+            else
+                D("_run: op1 for and/&& is true, evaluate op2=%1", v2)
+                v = runfetch( v2, ctx, stack )
+            end
+        elseif e.op == 'or' or e.op == '||' then
+            if v1 == nil or not coerce(v1, "boolean") then
+                D("_run: op1 for or/|| false, evaluate op2=%1", v2)
+                v = runfetch( v2, ctx, stack )
+            else
+                D("_run: shortcut or/|| op1 is true")
+                v = v1 -- shortcut lead exp is true (in "a or b", no need to eval b if a is true)
+            end
+        elseif (e.op == '+') then
+            -- Special case for +, if either operand is a string, treat as concatenation
+            if base.type(v1) == "string" or base.type(v2) == "string" then
+                v = coerce(v1, "string") .. coerce(v2, "string")
+            else
+                v = coerce(v1, "number") + coerce(v2, "number")
+            end
+        elseif (e.op == '-') then
+            v = coerce(v1, "number") - coerce(v2, "number")
+        elseif (e.op == '*') then
+            v = coerce(v1, "number") * coerce(v2, "number")
+        elseif (e.op == '/') then
+            v = coerce(v1, "number") / coerce(v2, "number")
+        elseif (e.op == '%') then
+            v = coerce(v1, "number") % coerce(v2, "number")
+        elseif (e.op == '&') then
+            -- If both operands are numbers, bitwise; otherwise boolean
+            if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
+                v = coerce(v1, "boolean") and coerce(v2, "boolean")
+            else
+                v = bit.band( coerce(v1, "number"), coerce(v2, "number") )
+            end
+        elseif (e.op == '|') then
+            -- If both operands are numbers, bitwise; otherwise boolean
+            if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
+                v = coerce(v1, "boolean") or coerce(v2, "boolean")
+            else
+                v = bit.bor( coerce(v1, "number"), coerce(v2, "number") )
+            end
+        elseif (e.op == '^') then
+            -- If both operands are numbers, bitwise; otherwise boolean
+            if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
+                v = coerce(v1, "boolean") ~= coerce(v2, "boolean")
+            else
+                v = bit.bxor( coerce(v1, "number"), coerce(v2, "number") )
+            end
+        elseif (e.op == '<') then
+            if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
+                .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
+            v = v1 < v2
+        elseif (e.op == '<=') then
+            if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
+                .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
+            v = v1 <= v2
+        elseif (e.op == '>') then
+            if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
+                .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
+            v = v1 > v2
+        elseif (e.op == '>=') then
+            if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
+                .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
+            v = v1 >= v2
+        elseif (e.op == '==') then
+            if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
+                v = coerce(v1, "boolean") == coerce(v2, "boolean")
+            elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
+                -- Either is number and both have valid numeric representation, treat both as numbers
+                -- That is 123 > "45" returns true
+                v = coerce(v1, "number") == coerce(v2, "number")
+            else
+                v = coerce(v1, "string") == coerce(v2, "string")
+            end
+        elseif (e.op == '<>' or e.op == '!=' or e.op == '~=') then
+            if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
+                v = coerce(v1, "boolean") == coerce(v2, "boolean")
+            elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
+                v = coerce(v1, "number") ~= coerce(v2, "number")
+            else
+                v = coerce(v1, "string") ~= coerce(v2, "string")
+            end
+        elseif e.op == '=' then
+            D("_run: making assignment to %1", v1)
+            -- Can't make assignment to reserved words
+            for j in pairs(reservedWords) do
+                if j == v1.name:lower() then evalerror("Can't assign to reserved word " .. j, e.pos) end
+            end
+            ctx.__lvars = ctx.__lvars or {}
+            local vbase = (ctx[v1.name] ~= nil) and ctx or ctx.__lvars
+            if v1.index ~= nil then
+                -- Array/index assignment
+                if type(vbase[v1.name]) ~= "table" then evalerror("Target is not an array ("..v1.name..")", e.pos) end
+                local ix = runfetch( v1.index, ctx, stack )
+                D("_run: assignment to %1 with computed index %2", v1.name, ix)
+                if ix < 1 or type(ix) ~= "number" then evalerror("Invalid index ("..tostring(ix)..")", e.pos) end
+                vbase[v1.name][ix] = v2
+            else
+                vbase[v1.name] = v2
+            end
+            v = v2
         else
-            error("Bug: invalid atom type in parse tree: " .. tostring(e.__type), 0)
+            error("Bug: binop parsed but not implemented by evaluator, binop=" .. e.op, 0)
         end
+    elseif isAtom( e, UNOP ) then
+        -- Get the operand
+        D("_run: handling unop, stack has %1", stack)
+        v = runfetch( e.operand, ctx, stack )
+        if v == nil then v = NULLATOM end
+        if (e.op == '-') then
+            v = -coerce(v, "number")
+        elseif (e.op == '+') then
+            -- noop
+        elseif (e.op == '!') then
+            if base.type(v) == "number" then
+                v = bit.bnot(v)
+            else
+                v = not coerce(v, "boolean")
+            end
+        elseif e.op == '#' then
+            D("_run: # unop on %1", v)
+            local vt = base.type(v)
+            if vt == "string" then
+                v = #v
+            elseif vt == "table" then
+                v = xp_tlen( v )
+            elseif isNull(v) then
+                v = 0
+            else
+                v = 1
+            end
+        else
+            error("Bug: unop parsed but not implemented by evaluator, unop=" .. e.op, 0)
+        end
+    elseif isAtom( e, FREF ) then
+        -- Function reference
+        D("_run: Handling function %1 with %2 args passed", e.name, #e.args)
+        if e.name == "if" then
+            -- Special-case the if() function, which evaluates only the sub-expression needed based on the result of the first argument.
+            -- This allows, for example, test for null before attempting to reference through it, as in if( x, x.name, "no name" ),
+            -- because arguments are normally evaluated prior to calling the function implementation, but this would cause "x.name" to
+            -- be attempted, which would fail and throw an error if x is null.
+            if #e.args < 2 then evalerror("if() requires two or three arguments", e.pos) end
+            local v1 = runfetch( e.args[1], ctx, stack )
+            if v1 == nil or not coerce( v1, "boolean" ) then
+                -- False
+                if #e.args > 2 then
+                    v = runfetch( e.args[3], ctx, stack )
+                else
+                    v = NULLATOM
+                end
+            else
+                -- True
+                v = runfetch( e.args[2], ctx, stack )
+            end
+        elseif e.name == "iterate" then
+            if #e.args < 2 then evalerror("iterate() requires two or more arguments", e.pos) end
+            local v1 = runfetch( e.args[1], ctx, stack )
+            v = {}
+            if v1 ~= nil and not isNull( v1 ) then
+                if type(v1) ~= "table" then evalerror("iterate() argument 1 is not array", e.pos) end
+                local v3  = '_'
+                if #e.args > 2 then
+                    v3 = runfetch( e.args[3], ctx, stack )
+                end
+                local iexp = isAtom( e.args[2], CONST ) and _comp( e.args[2].value, ctx ) or e.args[2] -- handle string as expression
+                -- if not isAtom( iexp ) then evalerror("iterate() arg 2 must be expression or string containing expression", e.pos) end
+                ctx.__lvars = ctx.__lvars or {}
+                for _,xa in ipairs( v1 ) do
+                    ctx.__lvars[v3] = xa
+                    local xv = runfetch( iexp, ctx, stack )
+                    if xv ~= nil and not isNull( xv ) then
+                        table.insert( v, xv )
+                    end
+                end
+            end
+        else
+            -- Parse our arguments and put each on the stack; push them in reverse so they pop correctly (first to pop is first passed)
+            local v1, argv
+            local argc = #e.args
+            argv = {}
+            for n=1,argc do
+                v = e.args[n]
+                D("_run: evaluate function argument %1: %2", n, v)
+                v1 = runfetch( v, ctx, stack)
+                if v1 == nil then v1 = NULLATOM end
+                D("_run: adding argument result %1", v1)
+                argv[n] = v1
+            end
+            -- Locate the implementation
+            local impl = nil
+            if nativeFuncs[e.name] ~= nil then
+                D("_run: found native func %1", nativeFuncs[e.name])
+                impl = nativeFuncs[e.name].impl
+                if (argc < nativeFuncs[e.name].nargs) then evalerror("Insufficient arguments to " .. e.name .. "(), need " .. nativeFuncs[e.name].nargs .. ", got " .. argc, e.pos) end
+            end
+            if (impl == nil and ctx['__functions'] ~= nil) then
+                impl = ctx['__functions'][e.name]
+                D("_run: context __functions provides implementation")
+            end
+            if impl == nil then
+                D("_run: context provides DEPRECATED-STYLE implementation")
+                impl = ctx[e.name]
+            end
+            if (impl == nil) then evalerror("Unrecognized function: " .. e.name, e.pos) end
+            if (base.type(impl) ~= "function") then evalerror("Reference is not a function: " .. e.name, e.pos) end
+            -- Run the implementation
+            local status
+            D("_run: calling %1 with args=%2", e.name, argv)
+            argv.__context = ctx -- trickery
+            status, v = pcall(impl, argv)
+            D("_run: finished %1() call, status=%2, result=%3", e.name, status, v)
+            if not status then
+                if base.type(v) == "table" and v.__source == "luaxp" then
+                    v.location = e.pos
+                    error(v) -- that one of our errors, just pass along
+                end
+                error("Execution of function " .. e.name .. "() threw an error: " .. tostring(v))
+            end
+        end
+    elseif isAtom( e, VREF ) then
+        D("_run: handling vref, name=%1, push to stack for later eval", e.name)
+        v = deepcopy(e) -- we're going to push the VREF directly (e.g. pushing atom to stack!)
+    else
+        error("Bug: invalid atom type in parse tree: " .. tostring(e.__type), 0)
+    end
 
-        -- Push result to stack, move on in tree
-        D("_run: pushing result to stack: %1", v)
-        if (v == 0) then v = 0 end -- Huh? Well... long story. Resolve the inconsistency of -0 in Lua. See issue #4.
-        table.insert(stack, 1, v) -- at start of array
-        index = index + 1
-    end
+    -- Push result to stack
+    D("_run: pushing result to stack: %1", v)
+    if v == 0 then v = 0 end -- Huh? Well... long story. Resolve the inconsistency of -0 in Lua. See issue #4.
+    table.insert(stack, v)
     D("_run: finished, stack has %1: %2", #stack, stack)
-    if #stack then
-        -- Put through fetch() because we may leave VREF atoms on the stack for last
-        return fetch(stack, ctx) -- return first element. Maybe return multiple some day???
-    end
-    return nil
+    return true
 end
 
 -- PUBLIC METHODS
@@ -1339,12 +1362,13 @@ end
 function _M.run( compiledExpression, executionContext )
     executionContext = executionContext or {}
     if (compiledExpression == nil or compiledExpression.rpn == nil or base.type(compiledExpression.rpn) ~= "table") then return nil end
-    local status, val = pcall(_run, compiledExpression.rpn, executionContext)
-    if (status) then
-        return val
-    else
-        return nil, val
-    end
+    local stack = {}
+    local status, val = pcall(_run, compiledExpression.rpn, executionContext, stack)
+    if #stack==0 or not status then return nil, val end
+    -- Put through fetch() because we may leave VREF atoms on the stack for last
+    status, val = pcall( fetch, stack, executionContext ) -- return first element. Maybe return multiple some   day???
+    if not status then return nil, val end
+    return val
 end
 
 -- Public convenience method to compile and run and expression.
