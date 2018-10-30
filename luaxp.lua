@@ -4,7 +4,7 @@
 -- author.
 --
 -- Author: Copyright (c) 2016,2018 Patrick Rigney <patrick@toggledbits.com>
--- License: GPL 3.0 (see https://github.com/toggledbits/luaxp/blob/master/LICENSE)
+-- License: MIT License
 -- Github: https://github.com/toggledbits/luaxp
 ------------------------------------------------------------------------
 
