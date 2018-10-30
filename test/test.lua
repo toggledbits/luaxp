@@ -76,7 +76,7 @@ end
      and it is a failure for the expression to not fail or fail with
      any other message.
 --]]
-local function eval(s, expected, failExpect, comment)
+local function eval(s, expected, failExpect, comment, ...)
     local pdebug
     nTest = nTest + 1
     if nTest == FOCUSTEST then pdebug = L._DEBUG ; L._DEBUG = debugPrint end
@@ -109,12 +109,18 @@ local function eval(s, expected, failExpect, comment)
         fail("expected error not thrown (%s)", failExpect)
     elseif expected ~= nil then
         if type(expected) == "function" then
-            expected( r )
+            expected( r, ... )
         elseif type(r) == type(expected) then
             if type(r) == "number" then
                 local delta = r - expected
                 if math.abs(delta) > 0.00001 then
                     fail("expected (%s)%s, delta %f", type(expected), tostring(expected), delta)
+                end
+            elseif type(r) == "table" then
+                for k,v in pairs(expected) do
+                    if r[k] == nil or r[k] ~= v then
+                        fail("expected (%s)%s, missing %s", type(expected), dump(expected), tostring(k))
+                    end
                 end
             else
                 if r ~= expected then
@@ -397,15 +403,6 @@ local function doMiscFuncTests()
         nSkip = nSkip + 9
     end
     
-    eval("i=list('A','B','C','D')", nil, nil, "Setup for next test")
-    eval("i[2]='X'", 'X', nil, "Array assignment")
-    eval("i[2]", "X", nil)
-    eval("#i", 4, nil)
-    eval("i", nil, nil, "Array result")
-    eval("k=4", 4, nil, "Setup for next test")
-    eval("i[k]", "D", nil, "Array index vref")
-    eval("i[k-1]", "C", nil, "Array index expression")
-    
     --[[ Not yet, maybe some day
     eval("Z=list()", nil, nil, "Set up for next test")
     eval("Z.abc=123", 123, nil, "Subref assignment")
@@ -415,7 +412,15 @@ end
 
 local function doMiscSyntaxTests()    
     -- Variable assignment
-    eval("i=25",25) eval("i", 25)
+    ctx.__lvars = ctx.__lvars or {}
+    ctx.__lvars.lv = "lv"
+    ctx.ctv = "ctv"
+    ctx.k = nil ctx.__lvars.k = nil
+    eval("lv", "lv") -- value sourced from __lvars (new style)
+    eval("ctv", "ctv") -- value sourced from ctx (old style, deprecated)
+    eval("i=25",25) 
+    eval("i", 25)
+    if ctx.__lvars.i == nil or ctx.__lvars.i ~= 25 then fail("VARIABLE NOT FOUND IN __LVARS") end
     eval("k", nil, "Undefined var")
 
     -- Nesting
@@ -454,6 +459,14 @@ local function doMiscSyntaxTests()
         ctx.__options = { subscriptmissnull=true }
         eval("array[19]", L.NULL, nil, "with 'subscriptmissnull' set")
     ctx.array = nil ctx.__options = nil
+    eval("i=list('A','B','C','D')", {'A','B','C','D'}, nil)
+    eval("i[2]='X'", 'X', nil, "Array assignment")
+    eval("i[2]", "X", nil)
+    eval("#i", 4, nil)
+    eval("i", {'A','X','C','D'}, nil)
+    eval("k=4", 4, nil)
+    eval("i[k]", "D", nil, "Array index vref")
+    eval("i[k-1]", "C", nil, "Array index expression")
     
     eval("true.val", nil, "Cannot subreference")
     eval("true[1]", nil, "not an array")

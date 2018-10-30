@@ -8,7 +8,7 @@ built-in functions (abs, cos, sin, floor, ceil, round, etc.).
 Through a passed-in context table, Luaxp supports named variables, and custom functions.
 See the documentation below for how to implement these.
 
-Luaxp is offered under GPL 3.0.
+Luaxp is offered under MIT License as of October 29, 2018 (beginning with version 0.9.7).
 
 ## Installation ##
 
@@ -21,12 +21,9 @@ TO-DO: Install with LuaRocks
 
 ## Known Issues ##
 
-As of version 0.9.2, the following are known issues or enhancement that are currently being considered:
+As of version 0.9.7, the following are known issues or enhancement that are currently being considered:
 
-* Variables defined in the evaluation context can be read by the evaluator, but there is no facility to change
-values or create new variables during expression evaluation (i.e. there is not assignment operation/statement).
-The "=" operator is currently used for equality comparison, but this may change in future and you are advised 
-not to use it for comparisons. [repository issue #3](https://github.com/toggledbits/luaxp/issues/3)
+None
 
 ## Bug Reports and Contributions ##
 
