@@ -10,7 +10,7 @@
 
 local _M = {}
 
-_M._VERSION = "0.9.7dev"
+_M._VERSION = "0.9.7"
 _M._VNUMBER = 000907
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
