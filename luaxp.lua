@@ -4,14 +4,14 @@
 -- author.
 --
 -- Author: Copyright (c) 2016,2018 Patrick Rigney <patrick@toggledbits.com>
--- License: GPL 3.0 (see https://github.com/toggledbits/luaxp/blob/master/LICENSE)
+-- License: MIT License
 -- Github: https://github.com/toggledbits/luaxp
 ------------------------------------------------------------------------
 
 local _M = {}
 
-_M._VERSION = "0.9.7dev"
-_M._VNUMBER = 000907
+_M._VERSION = "0.9.8dev"
+_M._VNUMBER = 000908
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
