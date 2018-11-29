@@ -369,6 +369,9 @@ local function doStringFuncTests()
     eval("tonumber('377',8)", 255)
     eval("tonumber('-377',8)", nil, nil, "Known limitation in Lua tonumber(), ignore this case.")
     eval("tonumber('1001',2)", 9)
+    eval("split('A,B,C,D,E', ',')", nil, nil, "Array of 5 elements")
+    eval("split('F,G,H')", nil, nil, "Array of 3 elements")
+    eval("join(split('Z+Y+X+W+V+U', '%+'), 'M')", "ZMYMXMWMVMU")
 end
 
 local function doMiscFuncTests()
