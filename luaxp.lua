@@ -10,7 +10,7 @@
 
 local _M = {}
 
-_M._VERSION = "0.9.8dev"
+_M._VERSION = "0.9.8"
 _M._VNUMBER = 000908
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
@@ -449,13 +449,30 @@ local function xp_tlen( t )
     return n
 end
 
+local function xp_split( argv )
+    local str = tostring( argv[1] or "" )
+    local sep = argv[2] or ","
+    local arr = {}
+    if #str == 0 then return arr, 0 end
+    local rest = string.gsub( str or "", "([^" .. sep .. "]*)" .. sep, function( m ) table.insert( arr, m ) return "" end )
+    table.insert( arr, rest )
+    return arr, #arr
+end
+
+local function xp_join( argv )
+    local a = argv[1] or {}
+    if type(a) ~= "table" then evalerror("Argument 1 to join() is not an array") end
+    local d = argv[2] or ","
+    return table.concat( a, d )
+end
+
 -- ??? All these tostrings() need to be coerce()
 local nativeFuncs = {
       ['abs']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -argv[1] else return argv[1] end end }
     , ['sgn']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -1 elseif (argv[1] == 0) then return 0 else return 1 end end }
     , ['floor'] = { nargs = 1, impl = function( argv ) return math.floor(argv[1]) end }
     , ['ceil']  = { nargs = 1, impl = function( argv ) return math.ceil(argv[1]) end }
-    , ['round'] = { nargs = 1, impl = function( argv ) local n = argv[1] local p = argv[2] or 0 return math.floor( n * xp_pow(10, p) + 0.5 ) / xp_pow(10, p) end }
+    , ['round'] = { nargs = 1, impl = function( argv ) local n = argv[1] local p = argv[2] or 0 return math.floor( n * (10^p) + 0.5 ) / (10^p) end }
     , ['cos']   = { nargs = 1, impl = function( argv ) return math.cos(argv[1]) end }
     , ['sin']   = { nargs = 1, impl = function( argv ) return math.sin(argv[1]) end }
     , ['tan']   = { nargs = 1, impl = function( argv ) return math.tan(argv[1]) end }
@@ -476,6 +493,8 @@ local nativeFuncs = {
     , ['tostring'] = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return "" else return tostring(argv[1]) end end }
     , ['tonumber'] = { nargs = 1, impl = function( argv ) if base.type(argv[1]) == "boolean" then if argv[1] then return 1 else return 0 end end return tonumber(argv[1], argv[2] or 10) or evalerror('Argument could not be converted to number') end }
     , ['format'] = { nargs = 1, impl = function( argv ) return string.format( unpack(argv) ) end }
+    , ['split'] = { nargs = 1, impl = xp_split }
+    , ['join'] = { nargs = 1, impl = xp_join }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
     , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(unpack(argv)) end }
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
