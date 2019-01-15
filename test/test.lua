@@ -336,6 +336,14 @@ local function doMathFuncTests()
     eval("min(9,1)", 1)
     eval("max(1,9)", 9)
     eval("max(9,1)", 9)
+    eval("array=list(5,16,2,6,-1,15,12)", nil, nil, "Array setup for next test")
+    eval("min(1,2,3,array)", -1)
+    eval("max(1,2,3,array)", 16)
+    eval("randomseed(123)", 123)
+    eval("randomseed()", os.time(), nil, "May be slightly off sometimes")
+    eval("random()", nil, nil, "Random number between 0 and 1")
+    eval("random(100)", nil, nil, "Random number between 1 and 100")
+    eval("random(20,30)", nil, nil, "Random number between 20 and 30")
 end
 
 local function doStringFuncTests()
@@ -456,12 +464,13 @@ local function doMiscSyntaxTests()
     eval("+", nil, "Expected operand")
 
     -- Array subscripts
-    ctx.array={11,22,33,44,55} 
+    ctx.__lvars = ctx.__lvars or {}
+    ctx.__lvars.array = {11,22,33,44,55}
         eval("array[4]", 44) 
         eval("array[19]", nil, "out of range")
         ctx.__options = { subscriptmissnull=true }
         eval("array[19]", L.NULL, nil, "with 'subscriptmissnull' set")
-    ctx.array = nil ctx.__options = nil
+        ctx.__options = nil
     eval("i=list('A','B','C','D')", {'A','B','C','D'}, nil)
     eval("i[2]='X'", 'X', nil, "Array assignment")
     eval("i[2]", "X", nil)
@@ -552,7 +561,7 @@ doMiscFuncTests()
 doRegressionTests()
 
 print("")
-print(string.format("Using module %s, ran %d tests, %d skipped, %d errors.", moduleName, nTest, nSkip, nErr))
+print(string.format("Using module %s %s, ran %d tests, %d skipped, %d errors.", moduleName, tostring(L._VERSION), nTest, nSkip, nErr))
 if ctx.response == nil then
     print(RED.."JSON data not loaded, some tests skipped"..RESET)
 end

@@ -10,8 +10,8 @@
 
 local _M = {}
 
-_M._VERSION = "0.9.8"
-_M._VNUMBER = 000908
+_M._VERSION = "0.9.9dev-19015"
+_M._VNUMBER = 000909
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
@@ -138,11 +138,13 @@ local function evalerror(msg, loc)
     return error( { __source='luaxp', ['type']='evaluation', location=loc, message=msg } )
 end
 
-local function xp_pow(b, x)
+local function xp_pow( argv )
+    local b,x = unpack( argv or {} )
     return math.exp(x * math.log(b))
 end
 
-local function xp_select(obj, keyname, keyval)
+local function xp_select( argv )
+    local obj,keyname,keyval = unpack( argv or {} )
     if base.type(obj) ~= "table" then evalerror("select() requires table/object arg 1") end
     keyname = tostring(keyname)
     keyval = tostring(keyval)
@@ -151,7 +153,7 @@ local function xp_select(obj, keyname, keyval)
             return v
         end
     end
-    return nil
+    return NULLATOM
 end
 
 local monthNameMap = {}
@@ -432,7 +434,8 @@ local function xp_trim( s )
     return xp_ltrim( xp_rtrim( s ) )
 end
 
-local function xp_keys( arr )
+local function xp_keys( argv )
+    local arr = unpack( argv or {} )
     if base.type( arr ) ~= "table" then evalerror("Array/table required") end
     local r = {}
     for k in pairs( arr ) do
@@ -466,6 +469,34 @@ local function xp_join( argv )
     return table.concat( a, d )
 end
 
+local function xp_min( argv )
+    local res = NULLATOM
+    for _,v in ipairs( argv ) do
+        local bv = v
+        if type(v) == "table" then
+            bv = xp_min( v )
+        end
+        if type(bv)=="number" and ( res == NULLATOM or bv < res ) then
+            res = bv
+        end
+    end
+    return res
+end
+
+local function xp_max( argv )
+    local res = NULLATOM
+    for _,v in ipairs( argv ) do
+        local bv = v
+        if type(v) == "table" then
+            bv = xp_max( v )
+        end
+        if type(bv)=="number" and ( res == NULLATOM or bv > res ) then
+            res = bv
+        end
+    end
+    return res
+end
+
 -- ??? All these tostrings() need to be coerce()
 local nativeFuncs = {
       ['abs']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -argv[1] else return argv[1] end end }
@@ -478,10 +509,12 @@ local nativeFuncs = {
     , ['tan']   = { nargs = 1, impl = function( argv ) return math.tan(argv[1]) end }
     , ['log']   = { nargs = 1, impl = function( argv ) return math.log(argv[1]) end }
     , ['exp']   = { nargs = 1, impl = function( argv ) return math.exp(argv[1]) end }
-    , ['pow']   = { nargs = 2, impl = function( argv ) return xp_pow(argv[1], argv[2]) end }
+    , ['pow']   = { nargs = 2, impl = xp_pow }
     , ['sqrt']  = { nargs = 1, impl = function( argv ) return math.sqrt( argv[1] ) end }
-    , ['min']   = { nargs = 2, impl = function( argv ) if argv[1] <= argv[2] then return argv[1] else return argv[2] end end }
-    , ['max']   = { nargs = 2, impl = function( argv ) if argv[1] >= argv[2] then return argv[1] else return argv[2] end end }
+    , ['min']   = { nargs = 1, impl = xp_min }
+    , ['max']   = { nargs = 1, impl = xp_max }
+    , ['randomseed']   = { nargs = 0, impl = function( argv ) local s = argv[1] or os.time() math.randomseed(s) return s end }
+    , ['random']   = { nargs = 0, impl = function( argv ) return math.random( unpack(argv) ) end }
     , ['len']   = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return 0 elseif type(argv[1]) == "table" then return xp_tlen(argv[1]) else return string.len(tostring(argv[1])) end end }
     , ['sub']   = { nargs = 2, impl = function( argv ) local st = tostring(argv[1]) local p = argv[2] local l = (argv[3] or -1) return string.sub(st, p, l) end }
     , ['find']  = { nargs = 2, impl = function( argv ) local st = tostring(argv[1]) local p = tostring(argv[2]) local i = argv[3] or 1 return (string.find(st, p, i) or 0) end }
@@ -500,8 +533,8 @@ local nativeFuncs = {
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
     , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], argv[2] or os.time() ) end }
     , ['choose'] = { nargs = 2, impl = function( argv ) local ix = argv[1] if ix < 1 or ix > (#argv-2) then return argv[2] else return argv[ix+2] end end }
-    , ['select'] = { nargs = 3, impl = function( argv ) return xp_select(argv[1],argv[2],argv[3]) end }
-    , ['keys'] = { nargs = 1, impl = function( argv ) return xp_keys( argv[1] ) end }
+    , ['select'] = { nargs = 3, impl = xp_select }
+    , ['keys'] = { nargs = 1, impl = xp_keys }
     , ['iterate'] = { nargs = 2, impl = true }
     , ['if'] = { nargs = 2, impl = true }
     , ['void'] = { nargs = 0, impl = function( argv ) return NULLATOM end }
@@ -586,7 +619,7 @@ local function scan_numeric( expr, index )
             i = string.byte(ch) - 48
             if i<0 or i>9 then break end
             ndec = ndec + 1
-            val = val + ( i * xp_pow( 10, -ndec ) )
+            val = val + ( i * 10 ^ -ndec )
             index = index + 1
         end
     end
@@ -611,7 +644,7 @@ local function scan_numeric( expr, index )
 
         if index == st then comperror("Missing exponent", index) end
         if neg then npow = -npow end
-        val = val * xp_pow( 10, npow )
+        val = val * ( 10 ^ npow )
     end
     -- Return result
     D("scan_numeric returning index=%1, val=%2", index, val)
