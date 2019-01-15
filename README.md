@@ -13,7 +13,7 @@ Luaxp is offered under MIT License as of October 29, 2018 (beginning with versio
 ## Github
 
 There are three branches in the Github repository:
-* master - The current released version this is the version to use/track if you are incorporating LuaXP into other projects;
+* master - The current released version; this is the version to use/track if you are incorporating LuaXP into other projects;
 * develop - The current development version, which may contain work in progress, partial implementations, debugging code, etc. ("the bleeding edge");
 * stable - The current stable development code, which contains only completed and tested functionality, but may still contain debug messages and lack some optimizations and refinement.
 
@@ -49,12 +49,10 @@ please use use [GitHub Issues](https://github.com/toggledbits/luaxp/issues). If 
 contribution, have at it! Please try to follow the coding style to keep it consistent, and use spaces
 rather than tabs (4 space indenting).
 
-Also, if you're making a feature enhancement contribution, consider looking at my lexp project as well,
+Also, if you're making a feature enhancement contribution, consider looking at [my lexp project](https://github.com/toggledbits/lexpjs) as well,
 and see if the same enhancement would be appropriate there. Since the Lua implementation is born of the
 JavaScript one, I think it would be an interesting exercise to try and keep them as close functionally
 as possible.
-
-TO-DO: Link to lexp github repository
 
 ## Syntax ##
 
@@ -64,6 +62,7 @@ This is a very rough BNF for the parser:
 <expression> ::= <number>
                | <string>
                | <variable-name>
+               | <variable-name> "[" <array-subscript> "]"
                | <function-name> "(" <argument-list> ")"
                | <expression> <binary-operator> <expression>
                | <unary-operator> <expression>
@@ -78,6 +77,8 @@ This is a very rough BNF for the parser:
 <binary-operator> ::= "+" | "-" | "*" | "/" | "%"
                     | "&" | "|" | "^"
                     | "<" | "<=" | ">" | ">=" | "==" | "=" | "<>" | "!="
+                    
+<array-subscript> :== <number> | <expression> /* must eval to number */
 
 <number> ::= <decimal-integer>
            | "0x" <hexadecimal-integer>
@@ -93,12 +94,14 @@ This is a very rough BNF for the parser:
 <function-name> ::= <letter> { <letter> | <digit> | "_" }
 ```
 
+This is intentionally simplified and doesn't exhaustively convey the full syntax, which would be too detailed to convey the concept quickly. Specific elements of the syntax such are array and dot notation for traversal of trees/structures is not shown (e.g. expressions forms "weather.current" and "weather['current'], which are equivalent).
+
 ## The Basics ##
 
 To load the library, use a `require()` statement:
 
 ```
-luaxp = require('luaxp')
+luaxp = require "luaxp"
 ```
 
 ### compile( expressionString ) ###
@@ -113,9 +116,8 @@ Example:
 ```
 luaxp = require('luaxp')
 
-local pr, message
-pr,message = luaxp.compile("abs(355/113-pi)")
-if (pr == nil) then
+local parsedExp,message = luaxp.compile("abs(355/113-pi)")
+if parsedExp == nil then
     -- Parsing failed
     print("Expression parsing failed. Reason: " .. message)
 else
@@ -124,29 +126,34 @@ else
 end
 ```
 
-### run( parsedResult [, executionContext ] ) ###
+### run( parsedExp [, executionContext ] ) ###
 
 The `run()` function executes the parsed expression. It takes an optional `executionContext` argument, which 
 is a table containing variable names and functions.
 
-`run()` returns the result of the expression evaluation. If the evaluation succeeds, this will always be a
-Lua `number` or `string` data type. If it fails, two values are returned: `nil` and a string containing the
-error message (i.e. same semantics as `compile()`).
+`run()` returns the result of the expression evaluation. If the evaluation succeeds, the first return value will always be non-`nil`. If it fails, two values are returned: `nil` and a string containing the
+error message (i.e. same semantics as `compile()`). You should always check for evaluation errors, as these are errors that were not or could not be detected in parsing (e.g. a sub-expression used as a divisor evaluates to zero, thus an attempt to divide by zero).
 
 ```
-luaxp = require('luaxp')
+luaxp = require "luaxp" 
 
-local pr, message
-pr,message = luaxp.compile("abs(355 / 113 - pi)" )
-if (pr == nil) then error("Parsing failed: " .. message) end
+local parsedExp, message = luaxp.compile("abs(355 / 113 - pi)" )
+if parsedExp == nil then error("Parsing failed: " .. message) end
 
 local context = { pi = math.pi }
 
-print("The result of the expression is: " .. luaxp.run( pr, context ) )
+local resultValue, rtmessage = luaxp.run( parsedExp, context )
+if resultValue == nil then
+    error("Evaluation failed: " .. rtmessage)
+else
+    print("Result:", luaxp.isNull(resultValue) and "NULL" or tostring(resultValue) )
+end
 ```
 
 In the above example, a context is created to define the value of "pi" that is used in the parsed expression.
 This context is then passed to `run()`, which uses it to dereference the value on the fly.
+
+The code also checks the return value for the special "null" value. If the result of an expression results in "no value", LuaXP does not use Lua `nil`, it has its own indicator, and your code should check for this as shown above.
 
 As of this version, Luaxp does not allow you to modify variables or create new ones during evaluation.
 
@@ -157,12 +164,11 @@ is the value of the parsed and evaluated expression, unless a parsing or evaluat
 case the function will return two values: `nil` and an error message.
 
 ```
-luaxp = require('luaxp')
+luaxp = require "luaxp"
 
-local result, message
 local context = { pi = math.pi }
-result,message = luaxp.evaluate("abs(355/113-pi)", context)
-if (result == nil) then
+local resultValue,message = luaxp.evaluate("abs(355/113-pi)", context)
+if resultValue == nil then
     error("Error in evaluation of expression: " .. message)
 else
 	print("The difference between the two approximations of pi is " .. tostring(result))
