@@ -13,9 +13,11 @@ Luaxp is offered under MIT License as of October 29, 2018 (beginning with versio
 ## Github
 
 There are three branches in the Github repository:
-* master - The current released version (this is the version to use/track if you are incorporating LuaXP into other projects;
+* master - The current released version this is the version to use/track if you are incorporating LuaXP into other projects;
 * develop - The current development version, which may contain work in progress, partial implementations, debugging code, etc. ("the bleeding edge");
 * stable - The current stable development code, which contains only completed and tested functionality, but may still contain debug messages and lack some optimizations and refinement.
+
+Code moves from the develop branch to the stable branch to the master branch. There is no release schedule. Releases are done as needed.
 
 ## Installation ##
 
