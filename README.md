@@ -281,7 +281,7 @@ Now, when you run your expression, you can pass this context, and the evaluator 
 means in the expression:
 
 ```
-luaxp = "luaxp"
+luaxp = require "luaxp"
 
 local context = {}
 context.toradians = function( argv )
