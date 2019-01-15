@@ -176,51 +176,56 @@ else
 end
 ```
 
-## Other Functions and Values
+### Other Functions and Values
 
-The LuaXP `dump()` function will return a string containing a safely-printed representation of the passed value. If the value passed is a table, for example, `dump()` will display it in a Lua-like table initialization syntax (tuned for readability, not for re-use as actual Lua code).
+The LuaXP `dump()` function will return a string containing a safely-printable representation of the passed value. If the value passed is a table, for example, `dump()` will display it in a Lua-like table initialization syntax (tuned for readability, not for re-use as actual Lua code).
 
 The `isNull()` function returns a boolean indicating if the passed argument is LuaXP's null value.
 
 The `null` and `NULL` constants (synonyms) are the represtations of LuaXP's null value. Thus the test `returnValue==luaxp.null` in Lua is equivalent to `isNull(returnvalue)`. The constants can also be used to initialize values when creating the execution context.
 
-## Reserved Words
+### Reserved Words
 
 The words `true` and `false` are reserved and evaluate to their respective boolean values. The words `null`, `NULL`, and `nil` evaluate to the LuaXP null value.
 
 The reserved words `pi` and `PI` (synonyms) are provided as a convenience and evaluate to the underyling Lua Math library implementation of `math.pi`.
 
-## Error Returns
+### Error Returns
 
-If a LuaXP calls results in an error, the error (table) returns contains the following elements:
+If a LuaXP call results in an error (`nil` first return value), the error table (second return value) contains the following elements:
 * `type` - Always included, the string "compile" or "evaluation" to indicate the stage at which the error was detected.
 * `message` - Always included, text describing the error.
 * `location` - Sometimes included, the character position at which the error was detected, if available.
 
 The _try_luaxp.lua_ example included with LuaXP shows how the `location` value can be used to provide feedback to the user when errors occur. Try entering "0b2" and "max(1,2,nosuchname)" into this example program.
 
-## User-defined Variables ##
+## Context Variables ##
 
 The context passed to `evaluate()` and `run()` is used to define named variables and custom functions
 that can be used in expressions. We've seen in the above examples for these functions how that works.
 For variables, it's simple a matter of defining a table element with the value to be used:
 
 ```
-local context
-context.pi = math.pi
+local context = {}
 context.minrange = 0
 context.maxrange = 100
+
+-- or the more streamlined:
+
+local context = { minrange=0, maxrange=100 }
 ```
 
-These are referred to in expressions simply by their names as defined (case sensitive):
+These may be referred to in expressions simply by their names as defined (case sensitive):
 
 ```
 $ lua try_luaxp.lua
 Running with Luaxp version 0.9.2
-Context variables defined:  minrange=0 pi=3.14159265 maxrange=100
+Context variables defined:
+    minrange=0 
+    maxrange=100
 
-EXP> pi
-Expression result: 3.14159265
+EXP> maxrange
+Expression result: 100
 
 EXP> (maxrange-minrange)/2
 Expression result: 50
@@ -276,7 +281,7 @@ Now, when you run your expression, you can pass this context, and the evaluator 
 means in the expression:
 
 ```
-luaxp = require('luaxp')
+luaxp = "luaxp"
 
 local context = {}
 context.toradians = function( argv )
@@ -315,4 +320,48 @@ If we run our program (which is available as `example1.lua` in the repository), 
 ```
 $ lua example1.lua
 The cosine of 45 degrees is 0.70710678118655
+```
+
+## "Local" Variables
+
+The evaluator supports assignment of a value to local variable. If multiple expressions are evaluated using the same context, the local variables defined by earlier expressions are visible to the later ones.
+
+```
+luaxp = require "luaxp"
+
+ctx = {}
+result = luaxp.evaluate( "v=100", ctx )
+print(result) -- prints 100
+
+result = luaxp.evaluate( "v=v*2", ctx )
+print(result) -- prints 200
+
+result = luaxp.evaluate( "v/5", ctx )
+print(result) -- prints 40
+```
+
+The local variables accumulated in the context are stored under the `__lvars` key. Thus, in this example, `ctx.__lvars.v` would be defined and have the value 40 in Lua after all three evaluations.
+
+Local variables are in scope before context variables (that is, if a local variable has the same name as a context variable, the local variable will always take precedence):
+
+```
+luaxp = require "luaxp"
+
+ctx = {}
+ctx.alpha = 57 -- context variable definition
+result = luaxp.evaluate( "alpha", ctx )
+print(result) -- prints 57 as expected
+
+-- This expression creates a local variable with the same name
+luaxp.evaluate( "alpha=99", ctx )
+
+-- Now that we've set local alpha, we can't "see" the context variable
+result = luaxp.evaluate( "alpha", ctx )
+print(result) -- prints 99
+
+-- If we print what's in the context, we see two different values, one
+-- for the original context variable as we defined it, the other for 
+-- the local variable defined by the expression evaluation.
+print(ctx.alpha) -- prints 57
+print(ctx.__lvars.alpha) -- prints 99
 ```
