@@ -13,7 +13,7 @@ Luaxp is offered under MIT License as of October 29, 2018 (beginning with versio
 ## Github
 
 There are three branches in the Github repository:
-* master - The current released version this is the version to use/track if you are incorporating LuaXP into other projects;
+* master - The current released version; this is the version to use/track if you are incorporating LuaXP into other projects;
 * develop - The current development version, which may contain work in progress, partial implementations, debugging code, etc. ("the bleeding edge");
 * stable - The current stable development code, which contains only completed and tested functionality, but may still contain debug messages and lack some optimizations and refinement.
 
@@ -49,12 +49,10 @@ please use use [GitHub Issues](https://github.com/toggledbits/luaxp/issues). If 
 contribution, have at it! Please try to follow the coding style to keep it consistent, and use spaces
 rather than tabs (4 space indenting).
 
-Also, if you're making a feature enhancement contribution, consider looking at my lexp project as well,
+Also, if you're making a feature enhancement contribution, consider looking at [my lexp project](https://github.com/toggledbits/lexpjs) as well,
 and see if the same enhancement would be appropriate there. Since the Lua implementation is born of the
 JavaScript one, I think it would be an interesting exercise to try and keep them as close functionally
 as possible.
-
-TO-DO: Link to lexp github repository
 
 ## Syntax ##
 
@@ -64,6 +62,7 @@ This is a very rough BNF for the parser:
 <expression> ::= <number>
                | <string>
                | <variable-name>
+               | <variable-name> "[" <array-subscript> "]"
                | <function-name> "(" <argument-list> ")"
                | <expression> <binary-operator> <expression>
                | <unary-operator> <expression>
@@ -78,6 +77,8 @@ This is a very rough BNF for the parser:
 <binary-operator> ::= "+" | "-" | "*" | "/" | "%"
                     | "&" | "|" | "^"
                     | "<" | "<=" | ">" | ">=" | "==" | "=" | "<>" | "!="
+                    
+<array-subscript> :== <number> | <expression> /* must eval to number */
 
 <number> ::= <decimal-integer>
            | "0x" <hexadecimal-integer>
@@ -93,60 +94,67 @@ This is a very rough BNF for the parser:
 <function-name> ::= <letter> { <letter> | <digit> | "_" }
 ```
 
+This is intentionally simplified and doesn't exhaustively convey the full syntax, which would be too detailed to convey the concept quickly. Specific elements of the syntax such are array and dot notation for traversal of trees/structures is not shown (e.g. expressions forms "weather.current" and "weather['current'], which are equivalent).
+
 ## The Basics ##
 
 To load the library, use a `require()` statement:
 
 ```
-luaxp = require('luaxp')
+luaxp = require "luaxp"
 ```
 
 ### compile( expressionString ) ###
 
 The `compile()` function accepts a single argument, the string the containing the expression to be parsed.
 If parsing of the expression succeeds, the function returns a table containing the parse tree that is used 
-as input to `run()` later. If parsing fails, the function returns two values: `nil` and a string containing
-the error message.
+as input to `run()` later. If parsing fails, the function returns two values: `nil` and a table containing information about the error.
 
 Example:
 
 ```
 luaxp = require('luaxp')
 
-local pr, message
-pr,message = luaxp.compile("abs(355/113-pi)")
-if (pr == nil) then
+local parsedExp,err = luaxp.compile("abs(355/113-pi)")
+if parsedExp == nil then
     -- Parsing failed
-    print("Expression parsing failed. Reason: " .. message)
+    print("Expression parsing failed. Reason: " .. luaxp.dump(err))
 else
     -- Parsing succeeded, on to other work...
 	...
 end
 ```
 
-### run( parsedResult [, executionContext ] ) ###
+This example uses the LuaXP public function `dump()` to display the contents of the `err` table returned.
+
+### run( parsedExp [, executionContext ] ) ###
 
 The `run()` function executes the parsed expression. It takes an optional `executionContext` argument, which 
 is a table containing variable names and functions.
 
-`run()` returns the result of the expression evaluation. If the evaluation succeeds, this will always be a
-Lua `number` or `string` data type. If it fails, two values are returned: `nil` and a string containing the
-error message (i.e. same semantics as `compile()`).
+`run()` returns the result of the expression evaluation. If the evaluation succeeds, the first return value will always be non-`nil`. If it fails, two values are returned: `nil` and a string containing the
+error message (i.e. same semantics as `compile()`). You should always check for evaluation errors, as these are errors that were not or could not be detected in parsing (e.g. a sub-expression used as a divisor evaluates to zero, thus an attempt to divide by zero).
 
 ```
-luaxp = require('luaxp')
+luaxp = require "luaxp" 
 
-local pr, message
-pr,message = luaxp.compile("abs(355 / 113 - pi)" )
-if (pr == nil) then error("Parsing failed: " .. message) end
+local parsedExp, cerr = luaxp.compile("abs(355 / 113 - pi)" )
+if parsedExp == nil then error("Parsing failed: " .. cerr.message) end
 
 local context = { pi = math.pi }
 
-print("The result of the expression is: " .. luaxp.run( pr, context ) )
+local resultValue, rerr = luaxp.run( parsedExp, context )
+if resultValue == nil then
+    error("Evaluation failed: " .. rerr.message)
+else
+    print("Result:", luaxp.isNull(resultValue) and "NULL" or tostring(resultValue) )
+end
 ```
 
 In the above example, a context is created to define the value of "pi" that is used in the parsed expression.
 This context is then passed to `run()`, which uses it to dereference the value on the fly.
+
+The code also checks the return value for the special "null" value. If the result of an expression results in "no value", LuaXP does not use Lua `nil`, it has its own indicator, and your code should check for this as shown above.
 
 As of this version, Luaxp does not allow you to modify variables or create new ones during evaluation.
 
@@ -157,40 +165,67 @@ is the value of the parsed and evaluated expression, unless a parsing or evaluat
 case the function will return two values: `nil` and an error message.
 
 ```
-luaxp = require('luaxp')
+luaxp = require "luaxp"
 
-local result, message
 local context = { pi = math.pi }
-result,message = luaxp.evaluate("abs(355/113-pi)", context)
-if (result == nil) then
-    error("Error in evaluation of expression: " .. message)
+local resultValue,err = luaxp.evaluate("abs(355/113-pi)", context)
+if resultValue == nil then
+    error("Error in evaluation of expression: " .. err.message)
 else
 	print("The difference between the two approximations of pi is " .. tostring(result))
 end
 ```
 
-## User-defined Variables ##
+### Other Functions and Values
+
+The LuaXP `dump()` function will return a string containing a safely-printable representation of the passed value. If the value passed is a table, for example, `dump()` will display it in a Lua-like table initialization syntax (tuned for readability, not for re-use as actual Lua code).
+
+The `isNull()` function returns a boolean indicating if the passed argument is LuaXP's null value.
+
+The `null` and `NULL` constants (synonyms) are the represtations of LuaXP's null value. Thus the test `returnValue==luaxp.null` in Lua is equivalent to `isNull(returnvalue)`. The constants can also be used to initialize values when creating the execution context.
+
+### Reserved Words
+
+The words `true` and `false` are reserved and evaluate to their respective boolean values. The words `null`, `NULL`, and `nil` evaluate to the LuaXP null value.
+
+The reserved words `pi` and `PI` (synonyms) are provided as a convenience and evaluate to the underyling Lua Math library implementation of `math.pi`.
+
+### Error Returns
+
+If a LuaXP call results in an error (`nil` first return value), the error table (second return value) contains the following elements:
+* `type` - Always included, the string "compile" or "evaluation" to indicate the stage at which the error was detected.
+* `message` - Always included, text describing the error.
+* `location` - Sometimes included, the character position at which the error was detected, if available.
+
+The _try_luaxp.lua_ example included with LuaXP shows how the `location` value can be used to provide feedback to the user when errors occur. Try entering "0b2" and "max(1,2,nosuchname)" into this example program.
+
+## Context Variables ##
 
 The context passed to `evaluate()` and `run()` is used to define named variables and custom functions
 that can be used in expressions. We've seen in the above examples for these functions how that works.
 For variables, it's simple a matter of defining a table element with the value to be used:
 
 ```
-local context
-context.pi = math.pi
+local context = {}
 context.minrange = 0
 context.maxrange = 100
+
+-- or the more streamlined:
+
+local context = { minrange=0, maxrange=100 }
 ```
 
-These are referred to in expressions simply by their names as defined (case sensitive):
+These may be referred to in expressions simply by their names as defined (case sensitive):
 
 ```
 $ lua try_luaxp.lua
 Running with Luaxp version 0.9.2
-Context variables defined:  minrange=0 pi=3.14159265 maxrange=100
+Context variables defined:
+    minrange=0 
+    maxrange=100
 
-EXP> pi
-Expression result: 3.14159265
+EXP> maxrange
+Expression result: 100
 
 EXP> (maxrange-minrange)/2
 Expression result: 50
@@ -246,7 +281,7 @@ Now, when you run your expression, you can pass this context, and the evaluator 
 means in the expression:
 
 ```
-luaxp = require('luaxp')
+luaxp = require "luaxp"
 
 local context = {}
 context.toradians = function( argv )
@@ -285,4 +320,48 @@ If we run our program (which is available as `example1.lua` in the repository), 
 ```
 $ lua example1.lua
 The cosine of 45 degrees is 0.70710678118655
+```
+
+## "Local" Variables
+
+The evaluator supports assignment of a value to local variable. If multiple expressions are evaluated using the same context, the local variables defined by earlier expressions are visible to the later ones.
+
+```
+luaxp = require "luaxp"
+
+ctx = {}
+result = luaxp.evaluate( "v=100", ctx )
+print(result) -- prints 100
+
+result = luaxp.evaluate( "v=v*2", ctx )
+print(result) -- prints 200
+
+result = luaxp.evaluate( "v/5", ctx )
+print(result) -- prints 40
+```
+
+The local variables accumulated in the context are stored under the `__lvars` key. Thus, in this example, `ctx.__lvars.v` would be defined and have the value 40 in Lua after all three evaluations.
+
+Local variables are in scope before context variables (that is, if a local variable has the same name as a context variable, the local variable will always take precedence):
+
+```
+luaxp = require "luaxp"
+
+ctx = {}
+ctx.alpha = 57 -- context variable definition
+result = luaxp.evaluate( "alpha", ctx )
+print(result) -- prints 57 as expected
+
+-- This expression creates a local variable with the same name
+luaxp.evaluate( "alpha=99", ctx )
+
+-- Now that we've set local alpha, we can't "see" the context variable
+result = luaxp.evaluate( "alpha", ctx )
+print(result) -- prints 99
+
+-- If we print what's in the context, we see two different values, one
+-- for the original context variable as we defined it, the other for 
+-- the local variable defined by the expression evaluation.
+print(ctx.alpha) -- prints 57
+print(ctx.__lvars.alpha) -- prints 99
 ```

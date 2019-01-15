@@ -57,7 +57,11 @@ local NULLATOM = { __type=TNUL }
 
 local charmap = { t = "\t", r = "\r", n = "\n" }
 
-local reservedWords = { ['false']=false, ['true']=true, pi=3.14159265, ['null']=NULLATOM, ['nil']=NULLATOM }
+local reservedWords = { 
+      ['false']=false, ['true']=true
+    , pi=math.pi, PI=math.pi
+    , ['null']=NULLATOM, ['NULL']=NULLATOM, ['nil']=NULLATOM 
+}
 
 local function dump(t, seen)
     if seen == nil then seen = {} end
@@ -1251,16 +1255,15 @@ _run = function( atom, ctx, stack )
                 if j == v1.name:lower() then evalerror("Can't assign to reserved word " .. j, e.pos) end
             end
             ctx.__lvars = ctx.__lvars or {}
-            local vbase = (ctx[v1.name] ~= nil) and ctx or ctx.__lvars
             if v1.index ~= nil then
                 -- Array/index assignment
-                if type(vbase[v1.name]) ~= "table" then evalerror("Target is not an array ("..v1.name..")", e.pos) end
+                if type(ctx.__lvars[v1.name]) ~= "table" then evalerror("Target is not an array ("..v1.name..")", e.pos) end
                 local ix = runfetch( v1.index, ctx, stack )
                 D("_run: assignment to %1 with computed index %2", v1.name, ix)
                 if ix < 1 or type(ix) ~= "number" then evalerror("Invalid index ("..tostring(ix)..")", e.pos) end
-                vbase[v1.name][ix] = v2
+                ctx.__lvars[v1.name][ix] = v2
             else
-                vbase[v1.name] = v2
+                ctx.__lvars[v1.name] = v2
             end
             v = v2
         else
