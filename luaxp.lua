@@ -57,7 +57,11 @@ local NULLATOM = { __type=TNUL }
 
 local charmap = { t = "\t", r = "\r", n = "\n" }
 
-local reservedWords = { ['false']=false, ['true']=true, pi=3.14159265, ['null']=NULLATOM, ['nil']=NULLATOM }
+local reservedWords = { 
+      ['false']=false, ['true']=true
+    , pi=math.pi, PI=math.pi
+    , ['null']=NULLATOM, ['NULL']=NULLATOM, ['nil']=NULLATOM 
+}
 
 local function dump(t, seen)
     if seen == nil then seen = {} end

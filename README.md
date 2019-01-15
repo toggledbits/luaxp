@@ -108,23 +108,24 @@ luaxp = require "luaxp"
 
 The `compile()` function accepts a single argument, the string the containing the expression to be parsed.
 If parsing of the expression succeeds, the function returns a table containing the parse tree that is used 
-as input to `run()` later. If parsing fails, the function returns two values: `nil` and a string containing
-the error message.
+as input to `run()` later. If parsing fails, the function returns two values: `nil` and a table containing information about the error.
 
 Example:
 
 ```
 luaxp = require('luaxp')
 
-local parsedExp,message = luaxp.compile("abs(355/113-pi)")
+local parsedExp,err = luaxp.compile("abs(355/113-pi)")
 if parsedExp == nil then
     -- Parsing failed
-    print("Expression parsing failed. Reason: " .. message)
+    print("Expression parsing failed. Reason: " .. luaxp.dump(err))
 else
     -- Parsing succeeded, on to other work...
 	...
 end
 ```
+
+This example uses the LuaXP public function `dump()` to display the contents of the `err` table returned.
 
 ### run( parsedExp [, executionContext ] ) ###
 
@@ -137,14 +138,14 @@ error message (i.e. same semantics as `compile()`). You should always check for 
 ```
 luaxp = require "luaxp" 
 
-local parsedExp, message = luaxp.compile("abs(355 / 113 - pi)" )
-if parsedExp == nil then error("Parsing failed: " .. message) end
+local parsedExp, cerr = luaxp.compile("abs(355 / 113 - pi)" )
+if parsedExp == nil then error("Parsing failed: " .. cerr.message) end
 
 local context = { pi = math.pi }
 
-local resultValue, rtmessage = luaxp.run( parsedExp, context )
+local resultValue, rerr = luaxp.run( parsedExp, context )
 if resultValue == nil then
-    error("Evaluation failed: " .. rtmessage)
+    error("Evaluation failed: " .. rerr.message)
 else
     print("Result:", luaxp.isNull(resultValue) and "NULL" or tostring(resultValue) )
 end
@@ -167,13 +168,36 @@ case the function will return two values: `nil` and an error message.
 luaxp = require "luaxp"
 
 local context = { pi = math.pi }
-local resultValue,message = luaxp.evaluate("abs(355/113-pi)", context)
+local resultValue,err = luaxp.evaluate("abs(355/113-pi)", context)
 if resultValue == nil then
-    error("Error in evaluation of expression: " .. message)
+    error("Error in evaluation of expression: " .. err.message)
 else
 	print("The difference between the two approximations of pi is " .. tostring(result))
 end
 ```
+
+## Other Functions and Values
+
+The LuaXP `dump()` function will return a string containing a safely-printed representation of the passed value. If the value passed is a table, for example, `dump()` will display it in a Lua-like table initialization syntax (tuned for readability, not for re-use as actual Lua code).
+
+The `isNull()` function returns a boolean indicating if the passed argument is LuaXP's null value.
+
+The `null` and `NULL` constants (synonyms) are the represtations of LuaXP's null value. Thus the test `returnValue==luaxp.null` in Lua is equivalent to `isNull(returnvalue)`. The constants can also be used to initialize values when creating the execution context.
+
+## Reserved Words
+
+The words `true` and `false` are reserved and evaluate to their respective boolean values. The words `null`, `NULL`, and `nil` evaluate to the LuaXP null value.
+
+The reserved words `pi` and `PI` (synonyms) are provided as a convenience and evaluate to the underyling Lua Math library implementation of `math.pi`.
+
+## Error Returns
+
+If a LuaXP calls results in an error, the error (table) returns contains the following elements:
+* `type` - Always included, the string "compile" or "evaluation" to indicate the stage at which the error was detected.
+* `message` - Always included, text describing the error.
+* `location` - Sometimes included, the character position at which the error was detected, if available.
+
+The _try_luaxp.lua_ example included with LuaXP shows how the `location` value can be used to provide feedback to the user when errors occur. Try entering "0b2" and "max(1,2,nosuchname)" into this example program.
 
 ## User-defined Variables ##
 
