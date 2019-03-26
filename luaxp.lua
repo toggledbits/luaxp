@@ -10,7 +10,7 @@
 
 local _M = {}
 
-_M._VERSION = "0.9.9dev-19015"
+_M._VERSION = "0.9.9dev-19084"
 _M._VNUMBER = 000909
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
@@ -57,10 +57,10 @@ local NULLATOM = { __type=TNUL }
 
 local charmap = { t = "\t", r = "\r", n = "\n" }
 
-local reservedWords = { 
+local reservedWords = {
       ['false']=false, ['true']=true
     , pi=math.pi, PI=math.pi
-    , ['null']=NULLATOM, ['NULL']=NULLATOM, ['nil']=NULLATOM 
+    , ['null']=NULLATOM, ['NULL']=NULLATOM, ['nil']=NULLATOM
 }
 
 local function dump(t, seen)
