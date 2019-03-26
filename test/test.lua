@@ -94,8 +94,8 @@ local function eval(s, expected, failExpect, comment, ...)
         end
     elseif r == L.NULL then
         mm = string.format("(luaxp)NULL")
-    else    
-        mm = string.format("(%s)%s", type(r), L.dump(r)) 
+    else
+        mm = string.format("(%s)%s", type(r), L.dump(r))
     end
     print(string.format("%03d: %s=%s", nTest, s, mm))
     if comment ~= nil then
@@ -127,7 +127,7 @@ local function eval(s, expected, failExpect, comment, ...)
                     fail("expected (%s)%s", type(expected), tostring(expected))
                 end
             end
-        else 
+        else
             fail("expected (%s)%s", type(expected), tostring(expected))
         end
     else
@@ -137,6 +137,11 @@ local function eval(s, expected, failExpect, comment, ...)
 end
 
 -- ********************* TIME PARSING TESTS **********************
+--[[
+    NOTA BENE! These tests were largely written to run on a system configured
+               for the America/New York time zone. If run in a different zone,
+               errors would be expected and adjustments would need to be made.
+--]]
 local function doTimeTests()
     local now = eval("time()", function( result ) if result ~= os.time() then fail() end end)
     local localeDateTime = eval("strftime(\"%x %X\", " .. now .. ")", nil, nil, "The result should be current date in locale format")
@@ -168,7 +173,7 @@ local function doTimeTests()
     local thn = eval("dateadd('2018-06-15', 45, 30, 15, 6, 3, 2)", 1600716645)
     eval("datediff(dateadd(time(),0,0,0,1))", 86400)
     eval("dateadd('1980-09-01',0,0,0,0,360)", 1283313600)
-    
+
     if ctx.response ~= nil then
         eval("strftime(\"%c\", response.loadtime)", nil, nil, "The result should comport with the loadtime value in sample.json")
     else
@@ -252,7 +257,7 @@ local function doNumericOpsTests()
     eval("6^4",2)
     eval("!8", 4294967287)
     eval("!0", 4294967295)
-    
+
     -- Precedence tests
     eval("1+2*3", 7)
     eval("1*2-4", -2)
@@ -393,7 +398,7 @@ local function doMiscFuncTests()
 
     eval("choose(3,\"default\",\"A\",\"B\",\"C\",\"D\")", "C")
     eval("choose(9,\"default\",\"A\",\"B\",\"C\",\"D\")", "default")
-    
+
     eval("#list(1,2,3,4,5,9)", 6, nil, "Returns table of six elements")
     eval("list(time(),strftime('%c',time()))", nil, nil, "Returns two-element array with timestamp and string time")
     eval("first(list('dog','cat','mouse',time(),upper('leaf')))", "dog")
@@ -402,10 +407,10 @@ local function doMiscFuncTests()
     eval("last(list())", L.NULL, nil, "Last element of empty list returns null")
     eval("last('cat')", L.NULL, nil, "Invalid data returns null", "Test constant")
     eval("last(tonumber('123'))", L.NULL, nil, "Invalid data returns null", "Test expression")
-    
+
     if ctx.response ~= nil then
         eval("#keys(response.rooms)", 23)
-        eval("i=''", "",nil,"Setup for next test") 
+        eval("i=''", "",nil,"Setup for next test")
         eval("iterate(list(1,2,3,4,5,6), '_' )", nil, nil, "Returns array of 6 elements")
         eval("iterate(list(1,2,3,4,5,6), _ )", nil, nil, "Returns array of 6 elements; same result as previous")
         eval("#iterate(response.rooms,'void(i = i + \",\" + _.name)')", 0, nil, "Iterator using anonymous upvalue and empty result array")
@@ -415,7 +420,7 @@ local function doMiscFuncTests()
     else
         nSkip = nSkip + 9
     end
-    
+
     --[[ Not yet, maybe some day
     eval("Z=list()", nil, nil, "Set up for next test")
     eval("Z.abc=123", 123, nil, "Subref assignment")
@@ -423,7 +428,7 @@ local function doMiscFuncTests()
     --]]
 end
 
-local function doMiscSyntaxTests()    
+local function doMiscSyntaxTests()
     -- Variable assignment
     ctx.__lvars = ctx.__lvars or {}
     ctx.__lvars.lv = "lv"
@@ -431,14 +436,14 @@ local function doMiscSyntaxTests()
     ctx.k = nil ctx.__lvars.k = nil
     eval("lv", "lv") -- value sourced from __lvars (new style)
     eval("ctv", "ctv") -- value sourced from ctx (old style, deprecated)
-    eval("i=25",25) 
+    eval("i=25",25)
     eval("i", 25)
     if ctx.__lvars.i == nil or ctx.__lvars.i ~= 25 then fail("VARIABLE NOT FOUND IN __LVARS") end
     eval("k", nil, "Undefined var")
 
     -- Nesting
     eval("min(70,max(20,min(60,max(30,min(50,40)))))", 40)
-    
+
     -- Quoted identifiers, subreferences, select()
     if ctx.response ~= nil then
         ctx.response['bad name!'] = ctx.response.loadtime
@@ -460,7 +465,7 @@ local function doMiscSyntaxTests()
 
     -- Syntax abuse
     eval("true=123", nil, "reserved word")
-    eval("1,2", nil, "Invalid operator") 
+    eval("1,2", nil, "Invalid operator")
     eval("a[", nil, "Unexpected end of array subscript")
     eval("123+array]", nil, "Invalid operator")
     eval("+", nil, "Expected operand")
@@ -468,7 +473,7 @@ local function doMiscSyntaxTests()
     -- Array subscripts
     ctx.__lvars = ctx.__lvars or {}
     ctx.__lvars.array = {11,22,33,44,55}
-        eval("array[4]", 44) 
+        eval("array[4]", 44)
         eval("array[19]", nil, "out of range")
         ctx.__options = { subscriptmissnull=true }
         eval("array[19]", L.NULL, nil, "with 'subscriptmissnull' set")
@@ -481,7 +486,7 @@ local function doMiscSyntaxTests()
     eval("k=4", 4, nil)
     eval("i[k]", "D", nil, "Array index vref")
     eval("i[k-1]", "C", nil, "Array index expression")
-    
+
     eval("true.val", nil, "Cannot subreference")
     eval("true[1]", nil, "not an array")
     eval("ff(1, )", nil, "Invalid subexpr") eval("ff( ,1)", nil, "Invalid subexpr")
@@ -491,12 +496,12 @@ local function doMiscSyntaxTests()
     eval("doublestring('galaxy')", "galaxygalaxy", nil, "Test custom function in __functions table (preferred)")
     ctx.dubstr = ctx.__functions.doublestring
     eval("dubstr('planet')", "planetplanet", nil, "Test custom function in context root (deprecated)")
-    
+
     -- External resolver
     ctx.__functions = { __resolve = function( name, ctx ) if name == "MagicName" then return "Magic String" else return nil end end }
     eval("MagicName+' was found'", "Magic String was found", nil, "Test last-resort resolver (name found)")
     eval("PlainName", nil, "Undefined variable", "Test last-resort resolver (name not found)")
-    
+
     ctx.__functions = nil
 end
 
@@ -527,12 +532,12 @@ local function doRegressionTests()
     eval("response.weather[1].description", "clear sky")
     eval("if( response.fuzzball==null, 'NO DATA', response.fuzzball.description )", "NO DATA", nil, "Late eval")
     eval("if( response['fuzzball']==null, 'NO DATA', response.fuzzball.description )", "NO DATA", nil, "Late eval")
-    
+
     -- Special context here as well.
     ctx = json.decode('{"val":8,"ack":true,"ts":1517804967381,"q":0,"from":"system.adapter.mihome-vacuum.0","lc":"xyz","_id":"mihome-vacuum.0.info.state","type":"state","common":{"name":"Vacuum state","type":"number","read":true,"max":30,"states":{"1":"Unknown 1","2":"Sleep no Charge","3":"Sleep","5":"Cleaning","6":"Returning home","7":"Manuell mode","8":"Charging","10":"Paused","11":"Spot cleaning","12":"Error?!"}},"native":{}}')
     ctx = { response=ctx }
     eval("response.val", 8, nil, "Specific test for atom mis-identification (issue X) discovered by SiteSensor user")
-    
+
     ctx = t -- restore prior context
 end
 
