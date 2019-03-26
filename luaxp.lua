@@ -377,13 +377,13 @@ local function xp_parse_time( t )
     if t:match("([^%s])") then
         return evalerror("Unparseable data: " .. t)
     end
-    local tm = os.time(tt)
+    local tm = os.time( tt )
     if hasTZ then
         -- If there's a timezone spec, apply it. Otherwise we assume time was in current (system) TZ
         -- and leave it unmodified.
-        -- local loctime = os.date("*t")
+        local loctime = os.date( "*t", tm ) -- get new local time's DST flag
         local epoch = { year=1970, month=1, day=1, hour=0 }
-        -- if loctime.isdst then epoch.isdst = true end
+        epoch.isdst = loctime.isdst -- 19084 fix, maybe need Reactor approach?
         local locale_offset = os.time( epoch )
         tm = tm - locale_offset -- back to UTC, because conversion assumes current TZ, so undo that.
         tm = tm - ( offset * 60 ) -- apply specified offset
