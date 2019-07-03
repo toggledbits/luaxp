@@ -354,10 +354,10 @@ local function doMathFuncTests()
 end
 
 local function doStringFuncTests()
-	eval("(123)..(456)", "123456")
-	eval("'abc'..987", "abc987")
-	eval("'abc'+987", "abc987")
-	eval("45+'°C'", "45°C")
+    eval("(123)..(456)", "123456")
+    eval("'abc'..987", "abc987")
+    eval("'abc'+987", "abc987")
+    eval("45+'°C'", "45°C")
     eval("len('The rain in Spain stays mainly in the plain.')", 44)
     eval("sub('The rain in Spain stays mainly in the plain.', 5, 8)", "rain")
     eval("sub('The rain in Spain stays mainly in the plain.', 40, 49)", "lain.")
@@ -507,8 +507,8 @@ local function doMiscSyntaxTests()
     ctx.__functions = { __resolve = function( name, ctx ) if name == "MagicName" then return "Magic String" else return nil end end }
     eval("MagicName+' was found'", "Magic String was found", nil, "Test last-resort resolver (name found)")
     eval("PlainName", nil, "Undefined variable", "Test last-resort resolver (name not found)")
-	
-	eval("tonumber         ( 123 )", 123, nil, "Excess whitespace in function ref")
+
+    eval("tonumber         ( 123 )", 123, nil, "Excess whitespace in function ref")
 
     ctx.__functions = nil
 end
@@ -557,7 +557,7 @@ if json then
         file:close()
         ctx.response = json.decode(s)
     else
-	print(RED.."JSON data could not be loaded!"..RESET)
+    print(RED.."JSON data could not be loaded!"..RESET)
     end
 end
 
