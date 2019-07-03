@@ -569,13 +569,8 @@ bit["bxor"]=function(x,y,z) return bit["band"](bit.nand(x,y,z),bit["bor"](x,y,z)
 -- Skips white space, returns index of non-space character or nil
 local function skip_white( expr, index )
     D("skip_white from %1 in %2", index, expr)
-    local len = string.len(expr)
-    local ch
-    while (index <= len) do
-        ch = string.sub(expr, index, index)
-        if not (ch == ' ' or ch == '\t') then return index end
-        index = index + 1
-    end
+	local s,e = string.find( expr, "^%s+", index )
+	if e then index = e + 1 end -- whitespace(s) found, return pos after
     return index
 end
 
@@ -665,7 +660,7 @@ local function scan_string( expr, index )
     local i
     local qchar = string.sub(expr, index, index)
     index = index + 1
-    while (index <= len) do
+    while index <= len do
         i = string.sub(expr, index, index)
         if i == '\\' and index < len then
             index = index + 1
@@ -776,9 +771,10 @@ local function scan_vref( expr, index )
     local len = string.len(expr);
     local ch, k
     local name = ""
-    while (index <= len) do
+    while index <= len do
         ch = string.sub(expr, index, index)
         if string.find( expr, "^%s*%(", index ) then
+			if name == "" then comperror("Invalid operator", index) end
             return scan_fref(expr, index, name)
         elseif string.find( expr, "^%s*%[", index ) then
             -- Possible that name is blank. We allow/endorse, for ['identifier'] form of vref (see runtime)
@@ -805,7 +801,7 @@ local function scan_expr( expr, index )
     local st = ""
     local parenLevel = 0
     index = index + 1
-    while (index <= len) do
+    while index <= len do
         local ch = string.sub(expr,index,index)
         if ch == ')' then
             if parenLevel == 0 then
