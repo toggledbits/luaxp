@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
 -- LuaXP is a simple expression evaluator for Lua, based on lexp.js, a
--- lightweight (math) expression parser for JavaScript by the same
+-- lightweight (math) expression evaluator for JavaScript by the same
 -- author.
 --
 -- Author: Copyright (c) 2016,2018 Patrick Rigney <patrick@toggledbits.com>
@@ -23,7 +23,7 @@ _M.binops = {
     , { op='+',  prec= 4 }
     , { op='-',  prec= 4 }
     , { op='<',  prec= 6 }
-	, { op='..', prec= 5 }
+    , { op='..', prec= 5 }
     , { op='<=', prec= 6 }
     , { op='>',  prec= 6 }
     , { op='>=', prec= 6 }
@@ -534,7 +534,7 @@ local nativeFuncs = {
     , ['split'] = { nargs = 1, impl = xp_split }
     , ['join'] = { nargs = 1, impl = xp_join }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
-	, ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( "*t", argv[1] ) end }
+    , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( "*t", argv[1] ) end }
     , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(unpack(argv)) end }
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
     , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], argv[2] or os.time() ) end }
@@ -569,8 +569,8 @@ bit["bxor"]=function(x,y,z) return bit["band"](bit.nand(x,y,z),bit["bor"](x,y,z)
 -- Skips white space, returns index of non-space character or nil
 local function skip_white( expr, index )
     D("skip_white from %1 in %2", index, expr)
-	local s,e = string.find( expr, "^%s+", index )
-	if e then index = e + 1 end -- whitespace(s) found, return pos after
+    local s,e = string.find( expr, "^%s+", index )
+    if e then index = e + 1 end -- whitespace(s) found, return pos after
     return index
 end
 
@@ -744,24 +744,24 @@ local function scan_aref( expr, index, name )
     local len = string.len(expr)
     local ch
     local subexp = ""
-	local depth = 0
+    local depth = 0
     index = skip_white( expr, index ) + 1
     while ( true ) do
         if index > len then return comperror("Unexpected end of array subscript expression", index) end
         ch = string.sub(expr, index, index)
         if ch == ']' then
-			if depth == 0 then
-				D("scan_aref: Found a closing bracket, subexp=%1", subexp)
-				local args = _comp(subexp)
-				D("scan_aref returning, array is %1", name)
-				return index+1, { __type=VREF, name=name, index=args, pos=index }
-			end
-			depth = depth - 1
-		elseif ch == "[" then
-			depth = depth + 1
-		end
-		subexp = subexp .. ch
-		index = index + 1
+            if depth == 0 then
+                D("scan_aref: Found a closing bracket, subexp=%1", subexp)
+                local args = _comp(subexp)
+                D("scan_aref returning, array is %1", name)
+                return index+1, { __type=VREF, name=name, index=args, pos=index }
+            end
+            depth = depth - 1
+        elseif ch == "[" then
+            depth = depth + 1
+        end
+        subexp = subexp .. ch
+        index = index + 1
     end
 end
 
@@ -774,7 +774,7 @@ local function scan_vref( expr, index )
     while index <= len do
         ch = string.sub(expr, index, index)
         if string.find( expr, "^%s*%(", index ) then
-			if name == "" then comperror("Invalid operator", index) end
+            if name == "" then comperror("Invalid operator", index) end
             return scan_fref(expr, index, name)
         elseif string.find( expr, "^%s*%[", index ) then
             -- Possible that name is blank. We allow/endorse, for ['identifier'] form of vref (see runtime)
@@ -1180,17 +1180,17 @@ _run = function( atom, ctx, stack )
                 D("_run: shortcut or/|| op1 is true")
                 v = v1 -- shortcut lead exp is true (in "a or b", no need to eval b if a is true)
             end
-		elseif e.op == '..' then
-			-- String concatenation, explicit coercion to string for operands.
+        elseif e.op == '..' then
+            -- String concatenation, explicit coercion to string for operands.
             v = coerce(v1, "string") .. coerce(v2, "string")
         elseif e.op == '+' then
-            -- Special case for +, which *can* concatenate strings. If both 
-			-- operands can be coerced to number, add; otherwise concat as strings.
-			local cannum1 = base.type( v1 ) == "number" or base.type( v1 ) == "boolean" or tonumber( v1 ) ~= nil
-			local cannum2 = base.type( v2 ) == "number" or base.type( v2 ) == "boolean" or tonumber( v2 ) ~= nil
-			if cannum1 and cannum2 then
+            -- Special case for +, which *can* concatenate strings. If both
+            -- operands can be coerced to number, add; otherwise concat as strings.
+            local cannum1 = base.type( v1 ) == "number" or base.type( v1 ) == "boolean" or tonumber( v1 ) ~= nil
+            local cannum2 = base.type( v2 ) == "number" or base.type( v2 ) == "boolean" or tonumber( v2 ) ~= nil
+            if cannum1 and cannum2 then
                 v = coerce(v1, "number") + coerce(v2, "number")
-			else
+            else
                 v = coerce(v1, "string") .. coerce(v2, "string")
             end
         elseif e.op == '-' then
