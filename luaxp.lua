@@ -10,7 +10,7 @@
 
 local _M = {}
 
-_M._VERSION = "0.9.9dev-19084"
+_M._VERSION = "0.9.9dev-19183"
 _M._VNUMBER = 000909
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
@@ -23,6 +23,7 @@ _M.binops = {
     , { op='+',  prec= 4 }
     , { op='-',  prec= 4 }
     , { op='<',  prec= 6 }
+	, { op='..', prec= 5 }
     , { op='<=', prec= 6 }
     , { op='>',  prec= 6 }
     , { op='>=', prec= 6 }
@@ -71,7 +72,7 @@ local function dump(t, seen)
         local st = "{ "
         local first = true
         for n,v in pairs(t) do
-            if (not first) then st = st .. ", " end
+            if not first then st = st .. ", " end
             st = st .. n .. "=" .. dump(v, seen)
             first = false
         end
@@ -504,7 +505,7 @@ end
 -- ??? All these tostrings() need to be coerce()
 local nativeFuncs = {
       ['abs']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -argv[1] else return argv[1] end end }
-    , ['sgn']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -1 elseif (argv[1] == 0) then return 0 else return 1 end end }
+    , ['sgn']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -1 elseif argv[1] == 0 then return 0 else return 1 end end }
     , ['floor'] = { nargs = 1, impl = function( argv ) return math.floor(argv[1]) end }
     , ['ceil']  = { nargs = 1, impl = function( argv ) return math.ceil(argv[1]) end }
     , ['round'] = { nargs = 1, impl = function( argv ) local n = argv[1] local p = argv[2] or 0 return math.floor( n * (10^p) + 0.5 ) / (10^p) end }
@@ -533,6 +534,7 @@ local nativeFuncs = {
     , ['split'] = { nargs = 1, impl = xp_split }
     , ['join'] = { nargs = 1, impl = xp_join }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
+	, ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( "*t", argv[1] ) end }
     , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(unpack(argv)) end }
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
     , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], argv[2] or os.time() ) end }
@@ -571,7 +573,7 @@ local function skip_white( expr, index )
     local ch
     while (index <= len) do
         ch = string.sub(expr, index, index)
-        if ( not (ch == ' ' or ch == '\t') ) then return index end
+        if not (ch == ' ' or ch == '\t') then return index end
         index = index + 1
     end
     return index
@@ -587,27 +589,27 @@ local function scan_numeric( expr, index )
     local radix = 0
     -- Try to guess the radix first
     ch = string.sub(expr, index, index)
-    if (ch == '0' and index < len) then
+    if ch == '0' and index < len then
         -- Look to next character
         index = index + 1
         ch = string.sub(expr, index, index)
-        if (ch == 'b' or ch == 'B') then
+        if ch == 'b' or ch == 'B' then
             radix = 2
             index = index + 1
-        elseif (ch == 'x' or ch == 'X') then
+        elseif ch == 'x' or ch == 'X' then
             radix = 16
             index = index + 1
-        elseif (ch == '.') then
+        elseif ch == '.' then
             radix = 10 -- going to be a decimal number
         else
             radix = 8
         end
     end
-    if (radix <= 0) then radix = 10 end
+    if radix <= 0 then radix = 10 end
     -- Now parse the whole part of the number
     while (index <= len) do
         ch = string.sub(expr, index, index)
-        if (ch == '.') then break end
+        if ch == '.' then break end
         i = string.find("0123456789ABCDEF", string.upper(ch), 1, true)
         if i == nil or ( radix==10 and i==15 ) then break end
         if i > radix then comperror("Invalid digit for radix "..radix, index) end
@@ -615,7 +617,7 @@ local function scan_numeric( expr, index )
         index = index + 1
     end
     -- Parse fractional part, if any
-    if (ch == '.' and radix==10) then
+    if ch == '.' and radix==10 then
         local ndec = 0
         index = index + 1 -- get past decimal point
         while (index <= len) do
@@ -628,7 +630,7 @@ local function scan_numeric( expr, index )
         end
     end
     -- Parse exponent, if any
-    if ( (ch == 'e' or ch == 'E') and radix == 10 ) then
+    if (ch == 'e' or ch == 'E') and radix == 10 then
         local npow = 0
         local neg = nil
         index = index + 1 -- get base exponent marker
@@ -665,11 +667,11 @@ local function scan_string( expr, index )
     index = index + 1
     while (index <= len) do
         i = string.sub(expr, index, index)
-        if (i == '\\' and index < len) then
+        if i == '\\' and index < len then
             index = index + 1
             i = string.sub(expr, index, index)
-            if (charmap[i] ~= nil) then i = charmap[i] end
-        elseif (i == qchar) then
+            if charmap[i] then i = charmap[i] end
+        elseif i == qchar then
             -- PHR??? Should we do the double char style of quoting? don''t won''t ??
             index = index + 1
             return index, { __type=CONST, value=st }
@@ -690,15 +692,15 @@ local function scan_fref( expr, index, name )
     local parenLevel = 1
     local ch
     local subexp = ""
-    index = skip_white( expr, index )
+    index = skip_white( expr, index ) + 1
     while ( true ) do
-        if ( index > len ) then return comperror("Unexpected end of argument list", index) end -- unexpected end of argument list
+        if index > len then return comperror("Unexpected end of argument list", index) end -- unexpected end of argument list
 
         ch = string.sub(expr, index, index)
-        if (ch == ')') then
+        if ch == ')' then
             D("scan_fref: Found a closing paren while at level %1", parenLevel)
             parenLevel = parenLevel - 1
-            if (parenLevel == 0) then
+            if parenLevel == 0 then
                 subexp = xp_trim( subexp )
                 D("scan_fref: handling end of argument list with subexp=%1", subexp)
                 if string.len(subexp) > 0 then -- PHR??? Need to test out all whitespace strings from the likes of "func( )"
@@ -719,12 +721,12 @@ local function scan_fref( expr, index, name )
             local qq = ch
             index, ch = scan_string( expr, index )
             subexp = subexp .. qq .. ch.value .. qq
-        elseif (ch == ',' and parenLevel == 1) then -- completed subexpression
+        elseif ch == ',' and parenLevel == 1 then -- completed subexpression
             subexp = xp_trim( subexp )
             D("scan_fref: handling argument=%1", subexp)
-            if (string.len(subexp) > 0) then
+            if string.len(subexp) > 0 then
                 local r = _comp(subexp)
-                if (r == nil) then return comperror("Subexpression failed to compile", index) end
+                if r == nil then return comperror("Subexpression failed to compile", index) end
                 table.insert( args, r )
                 D("scan_fref: inserted argument %1 as %2", subexp, r)
             else
@@ -735,7 +737,7 @@ local function scan_fref( expr, index, name )
             D("scan_fref: continuing argument scan in %1 from %2", expr, index)
         else
             subexp = subexp .. ch
-            if (ch == '(') then parenLevel = parenLevel + 1 end
+            if ch == '(' then parenLevel = parenLevel + 1 end
             index = index + 1
         end
     end
@@ -747,18 +749,24 @@ local function scan_aref( expr, index, name )
     local len = string.len(expr)
     local ch
     local subexp = ""
+	local depth = 0
+    index = skip_white( expr, index ) + 1
     while ( true ) do
-        if ( index > len ) then return comperror("Unexpected end of array subscript expression", index) end
+        if index > len then return comperror("Unexpected end of array subscript expression", index) end
         ch = string.sub(expr, index, index)
-        if (ch == ']') then
-            D("scan_aref: Found a closing bracket, subexp=%1", subexp)
-            local args = _comp(subexp)
-            D("scan_aref returning, array is %1", name)
-            return index+1, { __type=VREF, name=name, index=args, pos=index }
-        else
-            subexp = subexp .. ch
-            index = index + 1
-        end
+        if ch == ']' then
+			if depth == 0 then
+				D("scan_aref: Found a closing bracket, subexp=%1", subexp)
+				local args = _comp(subexp)
+				D("scan_aref returning, array is %1", name)
+				return index+1, { __type=VREF, name=name, index=args, pos=index }
+			end
+			depth = depth - 1
+		elseif ch == "[" then
+			depth = depth + 1
+		end
+		subexp = subexp .. ch
+		index = index + 1
     end
 end
 
@@ -770,16 +778,16 @@ local function scan_vref( expr, index )
     local name = ""
     while (index <= len) do
         ch = string.sub(expr, index, index)
-        if (ch == '(') then
-            return scan_fref(expr, index+1, name)
-        elseif (ch == "[") then
+        if string.find( expr, "^%s*%(", index ) then
+            return scan_fref(expr, index, name)
+        elseif string.find( expr, "^%s*%[", index ) then
             -- Possible that name is blank. We allow/endorse, for ['identifier'] form of vref (see runtime)
-            return scan_aref(expr, index+1, name)
+            return scan_aref(expr, index, name)
         end
         k = string.find("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_", string.upper(ch), 1, true)
-        if (k == nil) then
+        if k == nil then
             break
-        elseif (name == "" and k <= 10) then
+        elseif name == "" and k <= 10 then
             return comperror("Invalid identifier", index)
         end
 
@@ -799,15 +807,15 @@ local function scan_expr( expr, index )
     index = index + 1
     while (index <= len) do
         local ch = string.sub(expr,index,index)
-        if (ch == ')') then
-            if (parenLevel == 0) then
+        if ch == ')' then
+            if parenLevel == 0 then
                 D("scan_expr parsing subexpression=%1", st)
                 local r = _comp( st )
-                if (r == nil) then return comperror("Subexpression failed to parse", index) end
+                if r == nil then return comperror("Subexpression failed to parse", index) end
                 return index+1, r -- pass as single-element sub-expression
             end
             parenLevel = parenLevel - 1
-        elseif (ch == '(') then
+        elseif ch == '(' then
             parenLevel = parenLevel + 1
         end
         -- Add character to subexpression string (note drop-throughs from above conditionals)
@@ -820,13 +828,13 @@ end
 local function scan_unop( expr, index )
     D("scan_unop from %1 in %2", index, expr)
     local len = string.len(expr)
-    if (index > len) then return index, nil end
+    if index > len then return index, nil end
     local ch = string.sub(expr, index, index)
-    if (ch == '-' or ch == '+' or ch == '!' or ch == '#') then
+    if ch == '-' or ch == '+' or ch == '!' or ch == '#' then
         -- We have a UNOP
         index = index + 1
         local k, r = scan_token( expr, index )
-        if (r == nil) then return k, r end
+        if r == nil then return k, r end
         return k, { __type=UNOP, op=ch, pos=index, operand=r }
     end
     return index, nil -- Not a UNOP
@@ -836,28 +844,28 @@ local function scan_binop( expr, index )
     D("scan_binop from %1 in %2", index, expr)
     local len = string.len(expr)
     index = skip_white(expr, index)
-    if (index > len) then return index, nil end
+    if index > len then return index, nil end
 
     local op = ""
     local k = 0
     local prec
-    while (index <= len) do
+    while index <= len do
         local ch = string.sub(expr,index,index)
         local st = op .. ch
         local matched = false
         k = k + 1
         for _,f in ipairs(_M.binops) do
-            if (string.sub(f.op,1,k) == st) then
+            if string.sub(f.op,1,k) == st then
                 -- matches something
                 matched = true
                 prec = f.prec
                 break;
             end
         end
-        if (not matched) then
+        if not matched then
             -- Didn't match anything. If we matched nothing on the first character, that's an error.
             -- Otherwise, op now contains the name of the longest-matching binop in the catalog.
-            if (k == 1) then return comperror("Invalid operator", index) end
+            if k == 1 then return comperror("Invalid operator", index) end
             break
         end
 
@@ -875,14 +883,14 @@ scan_token = function( expr, index )
     D("scan_token from %1 in %2", index, expr)
     local len = string.len(expr)
     index = skip_white(expr, index)
-    if (index > len) then return index, nil end
+    if index > len then return index, nil end
 
     local ch = string.sub(expr,index,index)
     D("scan_token guessing from %1 at %2", ch, index)
-    if (ch == '"' or ch=="'") then
+    if ch == '"' or ch=="'" then
         -- String literal
         return scan_string( expr, index )
-    elseif (ch == '(') then
+    elseif ch == '(' then
         -- Nested expression
         return scan_expr( expr, index )
     elseif string.find("0123456789", ch, 1, true) ~= nil then
@@ -898,11 +906,11 @@ scan_token = function( expr, index )
     -- Check for unary operator
     local k, r
     k, r = scan_unop( expr, index )
-    if (r ~= nil) then return k, r end
+    if r ~= nil then return k, r end
 
     -- Variable or function reference?
     k, r = scan_vref( expr, index )
-    if (r ~= nil) then return k, r end
+    if r ~= nil then return k, r end
 
     --We've got no idea what we're looking at...
     return comperror("Invalid token",index)
@@ -922,7 +930,7 @@ local function parse_rpn( lexpr, expr, index, lprec )
         -- Fetch right side of expression
         index,rexpr = scan_token( expr, index )
         D("parse_rpn: mid rexpr is %1", rexpr)
-        if (rexpr == nil) then return comperror("Expected operand", ilast) end
+        if rexpr == nil then return comperror("Expected operand", ilast) end
         -- Peek at next operator
         ilast = index -- remember where we were
         index,lop = scan_binop( expr, index )
@@ -989,21 +997,19 @@ local function coerce(val, typ)
         -- Coerce to boolean
         if vt == "number" then return val ~= 0
         elseif vt == "string" then
-            if string.lower(val) == "true" or val == "1" then return true
-            elseif string.lower(val) == "false" or val == "0" then return false
+            if string.lower(val) == "true" or val == "yes" or val == "1" then return true
+            elseif string.lower(val) == "false" or val == "no" or val == "0" then return false
             else return #val ~= 0 -- empty string is false, all else is true
             end
         elseif isNull(val) then return false -- null coerces to boolean false
         end
     elseif typ == "string" then
         if vt == "number" then return tostring(val)
-        elseif vt == "boolean" and val then return "true"
-        elseif vt == "boolean" and not val then return "false"
+        elseif vt == "boolean" then return value and "true" or "false"
         elseif isNull(val) then return "" -- null coerces to empty string
         end
     elseif typ == "number" then
-        if vt == "boolean" and val then return 1
-        elseif vt == "boolean" and not val then return 0
+        if vt == "boolean" then return val and 1 or 0
         elseif vt == "string" then
             local n = tonumber(val,10)
             if n ~= nil then return n else evalerror("Coersion from string to number failed ("..val..")") end
@@ -1060,7 +1066,7 @@ local function fetch( stack, ctx )
         end
         if v == nil then evalerror("Undefined variable: " .. e.name, e.pos) end
         -- Apply array index if present
-        if (e.index ~= nil) then
+        if e.index ~= nil then
             if base.type(v) ~= "table" then evalerror(e.name .. " is not an array", e.pos) end
             local ix = runfetch(e.index, ctx, stack)
             D("fetch: applying subscript: %1[%2]", e.name, ix)
@@ -1097,7 +1103,7 @@ _run = function( atom, ctx, stack )
     local v = nil
     local e = atom
     D("_run: next element is %1", e)
-    if ( base.type(e) == "number" or base.type(e) == "string" ) then
+    if base.type(e) == "number" or base.type(e) == "string" then
         D("_run: direct value assignment for (%1)%2", base.type(e), e)
         v = e
     elseif isAtom( e, CONST ) then
@@ -1178,59 +1184,65 @@ _run = function( atom, ctx, stack )
                 D("_run: shortcut or/|| op1 is true")
                 v = v1 -- shortcut lead exp is true (in "a or b", no need to eval b if a is true)
             end
-        elseif (e.op == '+') then
-            -- Special case for +, if either operand is a string, treat as concatenation
-            if base.type(v1) == "string" or base.type(v2) == "string" then
-                v = coerce(v1, "string") .. coerce(v2, "string")
-            else
+		elseif e.op == '..' then
+			-- String concatenation, explicit coercion to string for operands.
+            v = coerce(v1, "string") .. coerce(v2, "string")
+        elseif e.op == '+' then
+            -- Special case for +, which *can* concatenate strings. If both 
+			-- operands can be coerced to number, add; otherwise concat as strings.
+			local cannum1 = base.type( v1 ) == "number" or base.type( v1 ) == "boolean" or tonumber( v1 ) ~= nil
+			local cannum2 = base.type( v2 ) == "number" or base.type( v2 ) == "boolean" or tonumber( v2 ) ~= nil
+			if cannum1 and cannum2 then
                 v = coerce(v1, "number") + coerce(v2, "number")
+			else
+                v = coerce(v1, "string") .. coerce(v2, "string")
             end
-        elseif (e.op == '-') then
+        elseif e.op == '-' then
             v = coerce(v1, "number") - coerce(v2, "number")
-        elseif (e.op == '*') then
+        elseif e.op == '*' then
             v = coerce(v1, "number") * coerce(v2, "number")
-        elseif (e.op == '/') then
+        elseif e.op == '/' then
             v = coerce(v1, "number") / coerce(v2, "number")
-        elseif (e.op == '%') then
+        elseif e.op == '%' then
             v = coerce(v1, "number") % coerce(v2, "number")
-        elseif (e.op == '&') then
+        elseif e.op == '&' then
             -- If both operands are numbers, bitwise; otherwise boolean
             if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
                 v = coerce(v1, "boolean") and coerce(v2, "boolean")
             else
                 v = bit.band( coerce(v1, "number"), coerce(v2, "number") )
             end
-        elseif (e.op == '|') then
+        elseif e.op == '|' then
             -- If both operands are numbers, bitwise; otherwise boolean
             if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
                 v = coerce(v1, "boolean") or coerce(v2, "boolean")
             else
                 v = bit.bor( coerce(v1, "number"), coerce(v2, "number") )
             end
-        elseif (e.op == '^') then
+        elseif e.op == '^' then
             -- If both operands are numbers, bitwise; otherwise boolean
             if base.type(v1) ~= "number" or base.type(v2) ~= "number" then
                 v = coerce(v1, "boolean") ~= coerce(v2, "boolean")
             else
                 v = bit.bxor( coerce(v1, "number"), coerce(v2, "number") )
             end
-        elseif (e.op == '<') then
+        elseif e.op == '<' then
             if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
                 .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
             v = v1 < v2
-        elseif (e.op == '<=') then
+        elseif e.op == '<=' then
             if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
                 .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
             v = v1 <= v2
-        elseif (e.op == '>') then
+        elseif e.op == '>' then
             if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
                 .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
             v = v1 > v2
-        elseif (e.op == '>=') then
+        elseif e.op == '>=' then
             if not check_operand(v1, {"number","string"}, v2) then evalerror("Invalid comparison ("
                 .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
             v = v1 >= v2
-        elseif (e.op == '==') then
+        elseif e.op == '==' then
             if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
                 v = coerce(v1, "boolean") == coerce(v2, "boolean")
             elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
@@ -1240,7 +1252,7 @@ _run = function( atom, ctx, stack )
             else
                 v = coerce(v1, "string") == coerce(v2, "string")
             end
-        elseif (e.op == '<>' or e.op == '!=' or e.op == '~=') then
+        elseif e.op == '<>' or e.op == '!=' or e.op == '~=' then
             if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
                 v = coerce(v1, "boolean") == coerce(v2, "boolean")
             elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
@@ -1274,11 +1286,11 @@ _run = function( atom, ctx, stack )
         D("_run: handling unop, stack has %1", stack)
         v = runfetch( e.operand, ctx, stack )
         if v == nil then v = NULLATOM end
-        if (e.op == '-') then
+        if e.op == '-' then
             v = -coerce(v, "number")
-        elseif (e.op == '+') then
+        elseif e.op == '+' then
             -- noop
-        elseif (e.op == '!') then
+        elseif e.op == '!' then
             if base.type(v) == "number" then
                 v = bit.bnot(v)
             else
@@ -1361,7 +1373,7 @@ _run = function( atom, ctx, stack )
                 impl = nativeFuncs[e.name].impl
                 if (argc < nativeFuncs[e.name].nargs) then evalerror("Insufficient arguments to " .. e.name .. "(), need " .. nativeFuncs[e.name].nargs .. ", got " .. argc, e.pos) end
             end
-            if (impl == nil and ctx['__functions'] ~= nil) then
+            if impl == nil and ctx['__functions'] ~= nil then
                 impl = ctx['__functions'][e.name]
                 D("_run: context __functions provides implementation")
             end
@@ -1369,8 +1381,8 @@ _run = function( atom, ctx, stack )
                 D("_run: context provides DEPRECATED-STYLE implementation")
                 impl = ctx[e.name]
             end
-            if (impl == nil) then evalerror("Unrecognized function: " .. e.name, e.pos) end
-            if (base.type(impl) ~= "function") then evalerror("Reference is not a function: " .. e.name, e.pos) end
+            if impl == nil then evalerror("Unrecognized function: " .. e.name, e.pos) end
+            if base.type(impl) ~= "function" then evalerror("Reference is not a function: " .. e.name, e.pos) end
             -- Run the implementation
             local status
             D("_run: calling %1 with args=%2", e.name, argv)
@@ -1406,7 +1418,7 @@ end
 function _M.compile( expressionString )
     local s,v,n -- n???
     s,v,n = pcall(_comp, expressionString)
-    if (s) then
+    if s then
         return  { rpn = v, source = expressionString }
     else
         return nil, v
@@ -1429,7 +1441,7 @@ end
 -- Public convenience method to compile and run and expression.
 function _M.evaluate( expressionString, executionContext )
     local r,m = _M.compile( expressionString )
-    if (r == nil) then return r,m end -- return error as we got it
+    if r == nil then return r,m end -- return error as we got it
     return _M.run( r, executionContext ) -- and directly return whatever run() wants to return
 end
 

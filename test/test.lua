@@ -1,7 +1,7 @@
 -- Find the luaxp we're going to test
 local moduleName = arg[1] or "luaxp"
 local L = require(moduleName)
-local json = require("json")
+local json = require "dkjson"
 
 -- FOCUSTEST, when set, debug on for specific test number
 FOCUSTEST = 0
@@ -217,7 +217,7 @@ local function doNumericParsingTests()
     eval("10e-1",1)
     eval("-0.567112E+06", -567112)
     eval(".7177", 0.7177)
-    eval("'123'+321",'123321')
+    eval("'123'+321", 444)
     eval("tonumber(123)+321",444)
     eval("pi",3.14159265)
     eval("0xgg", nil, "Invalid")
@@ -354,6 +354,10 @@ local function doMathFuncTests()
 end
 
 local function doStringFuncTests()
+	eval("(123)..(456)", "123456")
+	eval("'abc'..987", "abc987")
+	eval("'abc'+987", "abc987")
+	eval("45+'°C'", "45°C")
     eval("len('The rain in Spain stays mainly in the plain.')", 44)
     eval("sub('The rain in Spain stays mainly in the plain.', 5, 8)", "rain")
     eval("sub('The rain in Spain stays mainly in the plain.', 40, 49)", "lain.")
@@ -486,6 +490,8 @@ local function doMiscSyntaxTests()
     eval("k=4", 4, nil)
     eval("i[k]", "D", nil, "Array index vref")
     eval("i[k-1]", "C", nil, "Array index expression")
+    eval("i   [    k ]", "D", nil, "Array index vref excess whitespace")
+    eval("i                [ k-1            ]", "C", nil, "Array index expression excess whitespace")
 
     eval("true.val", nil, "Cannot subreference")
     eval("true[1]", nil, "not an array")
@@ -501,6 +507,8 @@ local function doMiscSyntaxTests()
     ctx.__functions = { __resolve = function( name, ctx ) if name == "MagicName" then return "Magic String" else return nil end end }
     eval("MagicName+' was found'", "Magic String was found", nil, "Test last-resort resolver (name found)")
     eval("PlainName", nil, "Undefined variable", "Test last-resort resolver (name not found)")
+	
+	eval("tonumber         ( 123 )", 123, nil, "Excess whitespace in function ref")
 
     ctx.__functions = nil
 end
