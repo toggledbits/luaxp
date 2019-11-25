@@ -173,6 +173,11 @@ local function doTimeTests()
     local thn = eval("dateadd('2018-06-15', 45, 30, 15, 6, 3, 2)", 1600716645)
     eval("datediff(dateadd(time(),0,0,0,1))", 86400)
     eval("dateadd('1980-09-01',0,0,0,0,360)", 1283313600)
+	-- Test date() function, builds date from y,m,d,h,m,s arguments; any null=current
+    eval("date(2019,11,4,15,5,0)", 1572897900,nil,"Matched result assumes local TZ is America/New York")
+    eval("strftime('%c', date(null,null,null,6,30,0))", nil, nil, "Result should be today 6:30am local time")
+    eval("strftime('%c', date(2020))", nil, nil, "Result should be year 2020 today's month, day, and current time")
+	eval("strftime('%c', date(null,1,1,0,0,0))", nil, nil, "Result is midnight Jan 1 of this year")
 
     if ctx.response ~= nil then
         eval("strftime(\"%c\", response.loadtime)", nil, nil, "The result should comport with the loadtime value in sample.json")
@@ -255,8 +260,8 @@ local function doNumericOpsTests()
     eval("7&8",0)
     eval("2|4",6)
     eval("6^4",2)
-    eval("!8", 4294967287)
-    eval("!0", 4294967295)
+    eval("!8", -9)
+    eval("!0", -1)
 
     -- Precedence tests
     eval("1+2*3", 7)
@@ -420,7 +425,10 @@ local function doMiscFuncTests()
         eval("#iterate(response.rooms,'void(i = i + \",\" + _.name)')", 0, nil, "Iterator using anonymous upvalue and empty result array")
         eval("#i", 254, nil, "Expected length of string may change if data altered")
         eval('#iterate(response.devices,"if(device.room==10,device.id)","device")', 7, nil, "Expected number of matching rooms may change if data altered")
-        eval('#iterate(response.devices, if(device.room==10,device.id) , "device" )', 7, nil, "Expected number of matching rooms may change if data altered")
+        eval('#iterate(response.devices, if(device.room==10,device.id) , "device" )', 7, nil, "(LATE EVAL) Expected number of matching rooms may change if data altered")
+        eval('map(list(6,5,4,3,2,1), _*16)', nil, nil, "Returns 6 elements with val = 16 x key (e.g. 3=48)")
+        eval('map(list(6,5,4,3,2,1), "_*16")', nil, nil, "Result same as previous")
+        eval('map(list("dog","cat","goldfish","ferret"))', nil, nil, "Returns table (key=val): dog=1,cat=2,goldfish=3,ferret=4")
     else
         nSkip = nSkip + 9
     end
@@ -529,6 +537,19 @@ local function doNullTests()
     eval("null==false", true)
     eval("null==''", true)
     eval("len(null)", 0, nil, "The length of null is zero.")
+	eval("null and false", L.NULL, nil, "Lua style")
+	eval("null & false", false, nil, "C style (null coerced to boolean before op)")
+	eval("null and true", L.NULL)
+	eval("null & true", false)
+	eval("true and null", L.NULL)
+	eval("true & null", false)
+	eval("false and null", false)
+	eval("false & null", false)
+	eval("null or true", true)
+	eval("null or false", false)
+	eval("true or null", true)
+	eval("false or null", L.NULL)
+	eval("false | null", false, nil, "C style")
 end
 
 local function doRegressionTests()
@@ -563,6 +584,7 @@ end
 
 --[[
 --]]
+print("luaxp.null is "..tostring(L.NULL))
 doNumericParsingTests()
 doNullTests()
 doNumericOpsTests()

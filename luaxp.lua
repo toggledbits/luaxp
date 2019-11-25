@@ -10,8 +10,8 @@
 
 local _M = {}
 
-_M._VERSION = "0.9.9"
-_M._VNUMBER = 000909
+_M._VERSION = "1.0"
+_M._VNUMBER = 10000
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
@@ -55,6 +55,7 @@ local BINOP = 'binop'
 local TNUL = 'null'
 
 local NULLATOM = { __type=TNUL }
+setmetatable( NULLATOM, { __tostring=function() return "null" end } )
 
 local charmap = { t = "\t", r = "\r", n = "\n" }
 
@@ -214,8 +215,8 @@ local function xp_parse_time( t )
     -- Try to match a date. Start with two components.
     local order = nil
     local p = { t:match("^%s*(%d+)([/-])(%d+)(.*)") } -- entirely numeric w/sep
-    if p[3] == nil then D("match 2") p = { t:match("^%s*(%d+)(%-)(%a+)(.*)") } order=DMY end -- number-word (4-Jul)
-    if p[3] == nil then D("match 3") p = { t:match("^%s*(%a+)(%-)(%d+)(.*)") } order=MDY end -- word-number (Jul-4)
+    if p[3] == nil then D("match 2") p = { t:match("^%s*(%d+)([/-])(%a+)(.*)") } order=DMY end -- number-word (4-Jul)
+    if p[3] == nil then D("match 3") p = { t:match("^%s*(%a+)([/-])(%d+)(.*)") } order=MDY end -- word-number (Jul-4)
     if p[3] ~= nil then
         -- Look ahead for third component behind same separator
         D("Found p1=%1, p2=%2, sep=%3, rem=%4", p[1], p[2], p[3], p[4])
@@ -424,6 +425,21 @@ local function xp_date_diff( d1, d2 )
     return xp_parse_time( d1 ) - xp_parse_time( d2 or os.time() )
 end
 
+-- Create a timestamp for date/time in the current timezone or UTC by parts
+local function xp_mktime( yy, mm, dd, hours, mins, secs )
+    local pt = os.date("*t")
+    pt.year = tonumber(yy) or pt.year
+    pt.month = tonumber(mm) or pt.month
+    pt.day = tonumber(dd) or pt.day
+    pt.hour = tonumber(hours) or pt.hour
+    pt.min = tonumber(mins) or pt.min
+    pt.sec = tonumber(secs) or pt.sec
+    pt.isdst = nil
+    pt.yday = nil
+    pt.wday = nil
+    return os.time(pt)
+end
+
 local function xp_rtrim(s)
     if base.type(s) ~= "string" then evalerror("String required") end
     return s:gsub("%s+$", "")
@@ -534,7 +550,8 @@ local nativeFuncs = {
     , ['split'] = { nargs = 1, impl = xp_split }
     , ['join'] = { nargs = 1, impl = xp_join }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
-    , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( "*t", argv[1] ) end }
+    , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( argv[2] and "!*t" or "*t", argv[1] ) end }
+    , ['date'] = { nargs = 0, impl = function( argv ) return xp_mktime( unpack(argv) ) end }
     , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(unpack(argv)) end }
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
     , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], argv[2] or os.time() ) end }
@@ -542,6 +559,7 @@ local nativeFuncs = {
     , ['select'] = { nargs = 3, impl = xp_select }
     , ['keys'] = { nargs = 1, impl = xp_keys }
     , ['iterate'] = { nargs = 2, impl = true }
+    , ['map'] = { nargs = 2, impl = true }
     , ['if'] = { nargs = 2, impl = true }
     , ['void'] = { nargs = 0, impl = function( argv ) return NULLATOM end }
     , ['list'] = { nargs = 0, impl = function( argv ) local b = deepcopy( argv ) b.__context=nil return b end }
@@ -549,20 +567,27 @@ local nativeFuncs = {
     , ['last'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if base.type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[#arr] end end }
 }
 
--- Adapted from "BitUtils", Lua-users wiki at http://lua-users.org/wiki/BitUtils; thank you kind stranger(s)...
-local bit = {}
-bit['nand'] = function(x,y,z)
-    z=z or 2^16
-    if z<2 then
-        return 1-x*y
-    else
-        return bit.nand((x-x%z)/z,(y-y%z)/z,math.sqrt(z))*z+bit.nand(x%z,y%z,math.sqrt(z))
-    end
+-- Try to load bit module; fake it if we don't find it or not right.
+local _, bit = pcall( require, "bit" )
+if not ( type(bit) == "table" and bit.band and bit.bor and bit.bnot and bit.bxor ) then
+    bit = nil
 end
-bit["bnot"]=function(y,z) return bit.nand(bit.nand(0,0,z),y,z) end
-bit["band"]=function(x,y,z) return bit.nand(bit["bnot"](0,z),bit.nand(x,y,z),z) end
-bit["bor"]=function(x,y,z) return bit.nand(bit["bnot"](x,z),bit["bnot"](y,z),z) end
-bit["bxor"]=function(x,y,z) return bit["band"](bit.nand(x,y,z),bit["bor"](x,y,z),z) end
+if not bit then
+    -- Adapted from "BitUtils", Lua-users wiki at http://lua-users.org/wiki/BitUtils; thank you kind stranger(s)...
+    bit = {}
+    bit['nand'] = function(x,y,z)
+        z=z or 2^16
+        if z<2 then
+            return 1-x*y
+        else
+            return bit.nand((x-x%z)/z,(y-y%z)/z,math.sqrt(z))*z+bit.nand(x%z,y%z,math.sqrt(z))
+        end
+    end
+    bit["bnot"]=function(y,z) return bit.nand(bit.nand(0,0,z),y,z) end
+    bit["band"]=function(x,y,z) return bit.nand(bit["bnot"](0,z),bit.nand(x,y,z),z) end
+    bit["bor"]=function(x,y,z) return bit.nand(bit["bnot"](x,z),bit["bnot"](y,z),z) end
+    bit["bxor"]=function(x,y,z) return bit["band"](bit.nand(x,y,z),bit["bor"](x,y,z),z) end
+end
 
 -- Let's get to work
 
@@ -1002,12 +1027,12 @@ local function coerce(val, typ)
     elseif typ == "string" then
         if vt == "number" then return tostring(val)
         elseif vt == "boolean" then return value and "true" or "false"
-        elseif isNull(val) then return "" -- null coerces to empty string
+        elseif isNull(val) then return "" -- null coerces to empty string within expressions
         end
     elseif typ == "number" then
         if vt == "boolean" then return val and 1 or 0
         elseif vt == "string" then
-            local n = tonumber(val,10)
+            local n = tonumber(val,10) -- TODO ??? needs more complete parser (hex/octal/bin)
             if n ~= nil then return n else evalerror("Coersion from string to number failed ("..val..")") end
         end
         -- null coerces to NaN? We don't have NaN. Yet...
@@ -1017,7 +1042,7 @@ local function coerce(val, typ)
 end
 
 local function isNumeric(val)
-    if isNull(val)then return false end
+    if isNull(val) then return false end
     local s = tonumber(val, 10)
     if s == nil then return false
     else return true, s
@@ -1349,6 +1374,35 @@ _run = function( atom, ctx, stack )
                     end
                 end
             end
+        elseif e.name == "map" then
+            if #e.args < 1 then evalerror("map() requires one or more arguments", e.pos) end
+            local v1 = runfetch( e.args[1], ctx, stack )
+            v = {}
+            if v1 ~= nil and not isNull( v1 ) then
+                if type(v1) ~= "table" then evalerror("map() argument 1 is not array", e.pos) end
+                local v3  = '_'
+                if #e.args > 2 then
+                    v3 = runfetch( e.args[3], ctx, stack )
+                end
+                local iexp
+                if #e.args > 1 then
+                    iexp = isAtom( e.args[2], CONST ) and _comp( e.args[2].value, ctx ) or e.args[2] -- handle string as expression
+                    -- if not isAtom( iexp ) then evalerror("iterate() arg 2 must be expression or string containing expression", e.pos) end
+                else
+                    iexp = _comp( "__", ctx ) -- default index to pivot array
+                end
+                ctx.__lvars = ctx.__lvars or {}
+                for k,xa in ipairs( v1 ) do
+                    if not isNull( xa ) then
+                        ctx.__lvars[v3] = xa
+                        ctx.__lvars['__'] = k
+                        local xv = runfetch( iexp, ctx, stack )
+                        if xv ~= nil and not isNull( xv ) then
+                            v[tostring(xa)] = xv
+                        end
+                    end
+                end
+            end
         else
             -- Parse our arguments and put each on the stack; push them in reverse so they pop correctly (first to pop is first passed)
             local v1, argv
@@ -1364,12 +1418,12 @@ _run = function( atom, ctx, stack )
             end
             -- Locate the implementation
             local impl = nil
-            if nativeFuncs[e.name] ~= nil then
+            if nativeFuncs[e.name] then
                 D("_run: found native func %1", nativeFuncs[e.name])
                 impl = nativeFuncs[e.name].impl
                 if (argc < nativeFuncs[e.name].nargs) then evalerror("Insufficient arguments to " .. e.name .. "(), need " .. nativeFuncs[e.name].nargs .. ", got " .. argc, e.pos) end
             end
-            if impl == nil and ctx['__functions'] ~= nil then
+            if impl == nil and ctx['__functions'] then
                 impl = ctx['__functions'][e.name]
                 D("_run: context __functions provides implementation")
             end
