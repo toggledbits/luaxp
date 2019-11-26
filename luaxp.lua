@@ -469,7 +469,7 @@ end
 
 local function xp_tlen( t )
     local n = 0
-    for _,v in pairs(t) do n = n + 1 end
+    for _ in pairs(t) do n = n + 1 end
     return n
 end
 
@@ -594,7 +594,7 @@ end
 -- Skips white space, returns index of non-space character or nil
 local function skip_white( expr, index )
     D("skip_white from %1 in %2", index, expr)
-    local s,e = string.find( expr, "^%s+", index )
+    local _,e = string.find( expr, "^%s+", index )
     if e then index = e + 1 end -- whitespace(s) found, return pos after
     return index
 end
@@ -1026,7 +1026,7 @@ local function coerce(val, typ)
         end
     elseif typ == "string" then
         if vt == "number" then return tostring(val)
-        elseif vt == "boolean" then return value and "true" or "false"
+        elseif vt == "boolean" then return val and "true" or "false"
         elseif isNull(val) then return "" -- null coerces to empty string within expressions
         end
     elseif typ == "number" then
