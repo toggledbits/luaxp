@@ -518,20 +518,27 @@ local function xp_max( argv )
     return res
 end
 
+local msgNNA1 = "Non-numeric argument 1"
+
 -- ??? All these tostrings() need to be coerce()
 local nativeFuncs = {
-      ['abs']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -argv[1] else return argv[1] end end }
-    , ['sgn']   = { nargs = 1, impl = function( argv ) if argv[1] < 0 then return -1 elseif argv[1] == 0 then return 0 else return 1 end end }
-    , ['floor'] = { nargs = 1, impl = function( argv ) return math.floor(argv[1]) end }
-    , ['ceil']  = { nargs = 1, impl = function( argv ) return math.ceil(argv[1]) end }
-    , ['round'] = { nargs = 1, impl = function( argv ) local n = argv[1] local p = argv[2] or 0 return math.floor( n * (10^p) + 0.5 ) / (10^p) end }
-    , ['cos']   = { nargs = 1, impl = function( argv ) return math.cos(argv[1]) end }
-    , ['sin']   = { nargs = 1, impl = function( argv ) return math.sin(argv[1]) end }
-    , ['tan']   = { nargs = 1, impl = function( argv ) return math.tan(argv[1]) end }
-    , ['log']   = { nargs = 1, impl = function( argv ) return math.log(argv[1]) end }
-    , ['exp']   = { nargs = 1, impl = function( argv ) return math.exp(argv[1]) end }
+      ['abs']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return (n<0) and -n or n end }
+    , ['sgn']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return (n<0) and -1 or ((n==0) and 0 or 1) end }
+    , ['floor'] = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.floor(n) end }
+    , ['ceil']  = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.ceil(n) end }
+    , ['round'] = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) local p = tonumber( argv[2] ) or 0 return math.floor( n * (10^p) + 0.5 ) / (10^p) end }
+    , ['cos']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.cos(n) end }
+    , ['sin']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.sin(n) end }
+    , ['tan']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.tan(n) end }
+    , ['asin']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.asin(n) end }
+    , ['acos']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.acos(n) end }
+    , ['atan']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.atan(n) end }
+    , ['rad']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return n * math.pi / 180 end }
+    , ['deg']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return n * 180 / math.pi end }
+    , ['log']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.log(n) end }
+    , ['exp']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.exp(n) end }
     , ['pow']   = { nargs = 2, impl = xp_pow }
-    , ['sqrt']  = { nargs = 1, impl = function( argv ) return math.sqrt( argv[1] ) end }
+    , ['sqrt']  = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.sqrt(n) end }
     , ['min']   = { nargs = 1, impl = xp_min }
     , ['max']   = { nargs = 1, impl = xp_max }
     , ['randomseed']   = { nargs = 0, impl = function( argv ) local s = argv[1] or os.time() math.randomseed(s) return s end }
