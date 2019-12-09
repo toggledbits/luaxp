@@ -10,8 +10,8 @@
 
 local _M = {}
 
-_M._VERSION = "1.0"
-_M._VNUMBER = 10000
+_M._VERSION = "1.0.1"
+_M._VNUMBER = 10001
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
