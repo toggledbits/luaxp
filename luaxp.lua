@@ -10,8 +10,8 @@
 
 local _M = {}
 
-_M._VERSION = "1.0.1"
-_M._VNUMBER = 10001
+_M._VERSION = "1.0.2"
+_M._VNUMBER = 10002
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
@@ -43,9 +43,9 @@ _M.binops = {
 
 local MAXPREC = 99 -- value doesn't matter as long as it's >= any used in binops
 
+local base = _G
 local string = require("string")
 local math = require("math")
-local base = _G
 
 local CONST = 'const'
 local VREF = 'vref'
@@ -72,7 +72,7 @@ local function dump(t, seen)
         seen[t] = 1
         local st = "{ "
         local first = true
-        for n,v in pairs(t) do
+        for n,v in base.pairs(t) do
             if not first then st = st .. ", " end
             st = st .. n .. "=" .. dump(v, seen)
             first = false
@@ -82,17 +82,17 @@ local function dump(t, seen)
     elseif typ == "string" then
         return string.format("%q", t)
     elseif typ == "boolean" or typ == "number" then
-        return tostring(t)
+        return base.tostring(t)
     end
-    return string.format("(%s)%s", typ, tostring(t))
+    return string.format("(%s)%s", typ, base.tostring(t))
 end
 
 -- Debug output function. If _DEBUG is false or nil, no output.
 -- If function, uses that, otherwise print()
-local function D(s, ...)
+local function D(s, ...) -- luacheck: ignore 212
     if not _M._DEBUG then return end
     local str = string.gsub(s, "%%(%d+)", function( n )
-            n = tonumber(n, 10)
+            n = base.tonumber(n, 10)
             if n < 1 or n > #arg then return "nil" end
             local val = arg[n]
             if base.type(val) == "table" then
@@ -100,7 +100,7 @@ local function D(s, ...)
             elseif base.type(val) == "string" then
                 return string.format("%q", val)
             end
-            return tostring(val)
+            return base.tostring(val)
         end
     )
     if base.type(_M._DEBUG) == "function" then _M._DEBUG(str) else print(str) end
@@ -114,7 +114,7 @@ local _comp, _run, runfetch, scan_token
 local function deepcopy( t )
     if base.type(t) ~= "table" then return t end
     local r = {}
-    for k,v in pairs( t ) do
+    for k,v in base.pairs( t ) do
         if base.type(v) == "table" then
             r[k] = deepcopy(v)
         else
@@ -136,26 +136,27 @@ end
 
 local function comperror(msg, loc)
     D("throwing comperror at %1: %2", loc, msg)
-    return error( { __source='luaxp', ['type']='compile', location=loc, message=msg } )
+    return base.error( { __source='luaxp', ['type']='compile', location=loc, message=msg } )
 end
 
 local function evalerror(msg, loc)
     D("throwing evalerror at %1: %2", loc, msg)
-    return error( { __source='luaxp', ['type']='evaluation', location=loc, message=msg } )
+    return base.error( { __source='luaxp', ['type']='evaluation', location=loc, message=msg } )
 end
 
 local function xp_pow( argv )
-    local b,x = unpack( argv or {} )
+    local b,x = base.unpack( argv or {} )
     return math.exp(x * math.log(b))
 end
 
 local function xp_select( argv )
-    local obj,keyname,keyval = unpack( argv or {} )
+    local obj,keyname,keyval = base.unpack( argv or {} )
+	if isNull(obj) then return NULLATOM end
     if base.type(obj) ~= "table" then evalerror("select() requires table/object arg 1") end
-    keyname = tostring(keyname)
-    keyval = tostring(keyval)
-    for _,v in pairs(obj) do
-        if tostring(v[keyname]) == keyval then
+    keyname = base.tostring(keyname)
+    keyval = base.tostring(keyval)
+    for _,v in base.pairs(obj) do
+        if base.tostring(v[keyname]) == keyval then
             return v
         end
     end
@@ -165,10 +166,10 @@ end
 local monthNameMap = {}
 local function mapLocaleMonth( m )
     if m == nil then error("nil month name") end
-    local ml = string.lower(tostring(m))
+    local ml = string.lower(base.tostring(m))
     if ml:match("^%d+$") then
         -- All numeric. Simply return numeric form if valid range.
-        local k = tonumber(ml) or 0
+        local k = base.tonumber(ml) or 0
         if k >=1 and k <= 12 then return k end
     end
     if monthNameMap[ml] ~= nil then -- cached result?
@@ -198,7 +199,7 @@ local function guessMDDM()
     local d = os.date( "%x", os.time( { year=2001, month=8, day=22, hour=0 } ) )
     local p = { d:match("(%d+)([/-])(%d+)[/-](%d+)") }
     if p[1] == "2001" then return YMD,p[2]
-    elseif tonumber(p[1]) == 22 then return DMY,p[2]
+    elseif base.tonumber(p[1]) == 22 then return DMY,p[2]
     else return MDY,p[2] end
 end
 
@@ -206,8 +207,8 @@ end
 -- If mm/dd vs dd/mm is ambiguous, it tries to discern using current locale's rule.
 local function xp_parse_time( t )
     if base.type(t) == "number" then return t end -- if already numeric, assume it's already timestamp
-    if t == nil or tostring(t):lower() == "now" then return os.time() end
-    t = tostring(t) -- force string
+    if t == nil or base.tostring(t):lower() == "now" then return os.time() end
+    t = base.tostring(t) -- force string
     local now = os.time()
     local nd = os.date("*t", now) -- consistent
     local tt = { year=nd.year, month=nd.month, day=nd.day, hour=0, ['min']=0, sec=0 }
@@ -230,8 +231,8 @@ local function xp_parse_time( t )
             t = p[5] or "" -- advance token
         end
         -- We now have three components. Figure out their order.
-        p[5]=t p[6]=p[6]or"" D("p=%1,%2,%3,%4,%5", unpack(p))
-        local first = tonumber(p[1]) or 0
+        p[5]=t p[6]=p[6]or"" D("p=%1,%2,%3,%4,%5", base.unpack(p))
+        local first = base.tonumber(p[1]) or 0
         if order == nil and first > 31 then
             -- First is year (can't be month or day), assume y/m/d
             tt.year = first
@@ -257,7 +258,7 @@ local function xp_parse_time( t )
                 tt.month = mapLocaleMonth(p[1]) tt.day = p[3] tt.year = p[4]
             end
         end
-        tt.year = tonumber(tt.year)
+        tt.year = base.tonumber(tt.year)
         if tt.year < 100 then tt.year = tt.year + 2000 end
         D("Parsed date year=%1, month=%2, day=%3", tt.year, tt.month, tt.day)
     else
@@ -342,12 +343,12 @@ local function xp_parse_time( t )
         p = { t:match("^([+-]%d%d)(.*)") }
         if p[1] ~= nil then
             hasTZ = true
-            offset = 60 * tonumber(p[1])
+            offset = 60 * base.tonumber(p[1])
             t = p[2];
             p = { t:match("^:?(%d%d)(.*)") }
             if p[1] ~= nil then
-                if offset < 0 then offset = offset - tonumber(p[1])
-                else offset = offset + tonumber(p[1])
+                if offset < 0 then offset = offset - base.tonumber(p[1])
+                else offset = offset + base.tonumber(p[1])
                 end
                 t = p[2] or ""
             end
@@ -361,7 +362,7 @@ local function xp_parse_time( t )
     if p[2] ~= nil then
         D("Parsing offset from %1, first part is %2", t, p[2])
         local sign = p[1]
-        delta = tonumber(p[2])
+        delta = base.tonumber(p[2])
         if delta == nil then evalerror("Invalid delta spec: " .. t) end
         t = p[3] or ""
         for k = 1,3 do
@@ -369,7 +370,7 @@ local function xp_parse_time( t )
             p = { t:match("%:(%d+)(.*)") }
             if p[1] == nil then break end
             if k == 3 then delta = delta * 24 else delta = delta * 60 end
-            delta = delta + tonumber(p[1])
+            delta = delta + base.tonumber(p[1])
             t = p[2] or ""
         end
         if sign == "-" then delta = -delta end
@@ -397,15 +398,15 @@ end
 -- Date add. First arg is timestamp, then secs, mins, hours, days, months, years
 local function xp_date_add( a )
     local tm = xp_parse_time( a[1] )
-    if a[2] ~= nil then tm = tm + (tonumber(a[2]) or evalerror("Invalid seconds (argument 2) to dateadd()")) end
-    if a[3] ~= nil then tm = tm + 60 * (tonumber(a[3]) or evalerror("Invalid minutes (argument 3) to dateadd()")) end
-    if a[4] ~= nil then tm = tm + 3600 * (tonumber(a[4]) or evalerror("Invalid hours (argument 4) to dateadd()")) end
-    if a[5] ~= nil then tm = tm + 86400 * (tonumber(a[5]) or evalerror("Invalid days (argument 5) to dateadd()")) end
+    if a[2] ~= nil then tm = tm + (base.tonumber(a[2]) or evalerror("Invalid seconds (argument 2) to dateadd()")) end
+    if a[3] ~= nil then tm = tm + 60 * (base.tonumber(a[3]) or evalerror("Invalid minutes (argument 3) to dateadd()")) end
+    if a[4] ~= nil then tm = tm + 3600 * (base.tonumber(a[4]) or evalerror("Invalid hours (argument 4) to dateadd()")) end
+    if a[5] ~= nil then tm = tm + 86400 * (base.tonumber(a[5]) or evalerror("Invalid days (argument 5) to dateadd()")) end
     if a[6] ~= nil or a[7] ~= nil then
         D("Applying delta months and years to %1", tm)
         local d = os.date("*t", tm)
-        d.month = d.month + ( tonumber( a[6] ) or 0 )
-        d.year = d.year + ( tonumber( a[7] ) or 0 )
+        d.month = d.month + ( base.tonumber( a[6] ) or 0 )
+        d.year = d.year + ( base.tonumber( a[7] ) or 0 )
         D("Normalizing month,year=%1,%2", d.month, d.year)
         while d.month < 1 do
             d.month = d.month + 12
@@ -428,12 +429,12 @@ end
 -- Create a timestamp for date/time in the current timezone or UTC by parts
 local function xp_mktime( yy, mm, dd, hours, mins, secs )
     local pt = os.date("*t")
-    pt.year = tonumber(yy) or pt.year
-    pt.month = tonumber(mm) or pt.month
-    pt.day = tonumber(dd) or pt.day
-    pt.hour = tonumber(hours) or pt.hour
-    pt.min = tonumber(mins) or pt.min
-    pt.sec = tonumber(secs) or pt.sec
+    pt.year = base.tonumber(yy) or pt.year
+    pt.month = base.tonumber(mm) or pt.month
+    pt.day = base.tonumber(dd) or pt.day
+    pt.hour = base.tonumber(hours) or pt.hour
+    pt.min = base.tonumber(mins) or pt.min
+    pt.sec = base.tonumber(secs) or pt.sec
     pt.isdst = nil
     pt.yday = nil
     pt.wday = nil
@@ -456,10 +457,10 @@ local function xp_trim( s )
 end
 
 local function xp_keys( argv )
-    local arr = unpack( argv or {} )
+    local arr = base.unpack( argv or {} )
     if base.type( arr ) ~= "table" then evalerror("Array/table required") end
     local r = {}
-    for k in pairs( arr ) do
+    for k in base.pairs( arr ) do
         if k ~= "__context" then
             table.insert( r, k )
         end
@@ -469,12 +470,12 @@ end
 
 local function xp_tlen( t )
     local n = 0
-    for _ in pairs(t) do n = n + 1 end
+    for _ in base.pairs(t) do n = n + 1 end
     return n
 end
 
 local function xp_split( argv )
-    local str = tostring( argv[1] or "" )
+    local str = base.tostring( argv[1] or "" )
     local sep = argv[2] or ","
     local arr = {}
     if #str == 0 then return arr, 0 end
@@ -485,19 +486,33 @@ end
 
 local function xp_join( argv )
     local a = argv[1] or {}
-    if type(a) ~= "table" then evalerror("Argument 1 to join() is not an array") end
+    if base.type(a) ~= "table" then evalerror("Argument 1 to join() is not an array") end
     local d = argv[2] or ","
     return table.concat( a, d )
 end
 
+local function xp_indexof( args )
+	local arr, item, start = base.unpack( args )
+	start = start or 1
+	if isNull( arr ) then return 0 end
+	if base.type(arr) ~= "table" then evalerror("Array/table required") end
+	for k,v in base.ipairs( arr ) do
+		if k >= start then
+			if isNull( v ) and isNull( item ) then return k end
+			if v == item then return k end
+		end
+	end
+	return 0
+end
+
 local function xp_min( argv )
     local res = NULLATOM
-    for _,v in ipairs( argv ) do
+    for _,v in base.ipairs( argv ) do
         local bv = v
-        if type(v) == "table" then
+        if base.type(v) == "table" then
             bv = xp_min( v )
         end
-        if type(bv)=="number" and ( res == NULLATOM or bv < res ) then
+        if base.type(bv)=="number" and ( isNull(res) or bv < res ) then
             res = bv
         end
     end
@@ -506,12 +521,12 @@ end
 
 local function xp_max( argv )
     local res = NULLATOM
-    for _,v in ipairs( argv ) do
+    for _,v in base.ipairs( argv ) do
         local bv = v
-        if type(v) == "table" then
+        if base.type(v) == "table" then
             bv = xp_max( v )
         end
-        if type(bv)=="number" and ( res == NULLATOM or bv > res ) then
+        if base.type(bv)=="number" and ( isNull(res) or bv > res ) then
             res = bv
         end
     end
@@ -522,44 +537,45 @@ local msgNNA1 = "Non-numeric argument 1"
 
 -- ??? All these tostrings() need to be coerce()
 local nativeFuncs = {
-      ['abs']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return (n<0) and -n or n end }
-    , ['sgn']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return (n<0) and -1 or ((n==0) and 0 or 1) end }
-    , ['floor'] = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.floor(n) end }
-    , ['ceil']  = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.ceil(n) end }
-    , ['round'] = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) local p = tonumber( argv[2] ) or 0 return math.floor( n * (10^p) + 0.5 ) / (10^p) end }
-    , ['cos']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.cos(n) end }
-    , ['sin']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.sin(n) end }
-    , ['tan']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.tan(n) end }
-    , ['asin']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.asin(n) end }
-    , ['acos']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.acos(n) end }
-    , ['atan']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.atan(n) end }
-    , ['rad']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return n * math.pi / 180 end }
-    , ['deg']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return n * 180 / math.pi end }
-    , ['log']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.log(n) end }
-    , ['exp']   = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.exp(n) end }
+      ['abs']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return (n<0) and -n or n end }
+    , ['sgn']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return (n<0) and -1 or ((n==0) and 0 or 1) end }
+    , ['floor'] = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.floor(n) end }
+    , ['ceil']  = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.ceil(n) end }
+    , ['round'] = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) local p = base.tonumber( argv[2] ) or 0 return math.floor( n * (10^p) + 0.5 ) / (10^p) end }
+    , ['cos']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.cos(n) end }
+    , ['sin']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.sin(n) end }
+    , ['tan']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.tan(n) end }
+    , ['asin']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.asin(n) end }
+    , ['acos']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.acos(n) end }
+    , ['atan']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.atan(n) end }
+    , ['rad']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return n * math.pi / 180 end }
+    , ['deg']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return n * 180 / math.pi end }
+    , ['log']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.log(n) end }
+    , ['exp']   = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.exp(n) end }
     , ['pow']   = { nargs = 2, impl = xp_pow }
-    , ['sqrt']  = { nargs = 1, impl = function( argv ) local n = tonumber( argv[1] ) or evalerror(msgNNA1) return math.sqrt(n) end }
+    , ['sqrt']  = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.sqrt(n) end }
     , ['min']   = { nargs = 1, impl = xp_min }
     , ['max']   = { nargs = 1, impl = xp_max }
     , ['randomseed']   = { nargs = 0, impl = function( argv ) local s = argv[1] or os.time() math.randomseed(s) return s end }
-    , ['random']   = { nargs = 0, impl = function( argv ) return math.random( unpack(argv) ) end }
-    , ['len']   = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return 0 elseif type(argv[1]) == "table" then return xp_tlen(argv[1]) else return string.len(tostring(argv[1])) end end }
-    , ['sub']   = { nargs = 2, impl = function( argv ) local st = tostring(argv[1]) local p = argv[2] local l = (argv[3] or -1) return string.sub(st, p, l) end }
-    , ['find']  = { nargs = 2, impl = function( argv ) local st = tostring(argv[1]) local p = tostring(argv[2]) local i = argv[3] or 1 return (string.find(st, p, i) or 0) end }
-    , ['upper'] = { nargs = 1, impl = function( argv ) return string.upper(tostring(argv[1])) end }
-    , ['lower'] =  { nargs = 1, impl = function( argv ) return string.lower(tostring(argv[1])) end }
-    , ['trim'] = { nargs = 1, impl = function( argv ) return xp_trim(tostring(argv[1])) end }
-    , ['ltrim'] = { nargs = 1, impl = function( argv ) return xp_ltrim(tostring(argv[1])) end }
-    , ['rtrim'] = { nargs = 1, impl = function( argv ) return xp_rtrim(tostring(argv[1])) end }
-    , ['tostring'] = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return "" else return tostring(argv[1]) end end }
-    , ['tonumber'] = { nargs = 1, impl = function( argv ) if base.type(argv[1]) == "boolean" then if argv[1] then return 1 else return 0 end end return tonumber(argv[1], argv[2] or 10) or evalerror('Argument could not be converted to number') end }
-    , ['format'] = { nargs = 1, impl = function( argv ) return string.format( unpack(argv) ) end }
+    , ['random']   = { nargs = 0, impl = function( argv ) return math.random( base.unpack(argv) ) end }
+    , ['len']   = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return 0 elseif base.type(argv[1]) == "table" then return xp_tlen(argv[1]) else return string.len(base.tostring(argv[1])) end end }
+    , ['sub']   = { nargs = 2, impl = function( argv ) local st = base.tostring(argv[1]) local p = argv[2] local l = (argv[3] or -1) return string.sub(st, p, l) end }
+    , ['find']  = { nargs = 2, impl = function( argv ) local st = base.tostring(argv[1]) local p = base.tostring(argv[2]) local i = argv[3] or 1 return (string.find(st, p, i) or 0) end }
+    , ['upper'] = { nargs = 1, impl = function( argv ) return string.upper(base.tostring(argv[1])) end }
+    , ['lower'] =  { nargs = 1, impl = function( argv ) return string.lower(base.tostring(argv[1])) end }
+    , ['trim'] = { nargs = 1, impl = function( argv ) return xp_trim(base.tostring(argv[1])) end }
+    , ['ltrim'] = { nargs = 1, impl = function( argv ) return xp_ltrim(base.tostring(argv[1])) end }
+    , ['rtrim'] = { nargs = 1, impl = function( argv ) return xp_rtrim(base.tostring(argv[1])) end }
+    , ['tostring'] = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return "" else return base.tostring(argv[1]) end end }
+    , ['tonumber'] = { nargs = 1, impl = function( argv ) if base.type(argv[1]) == "boolean" then if argv[1] then return 1 else return 0 end end return base.tonumber(argv[1], argv[2] or 10) or evalerror('Argument could not be converted to number') end }
+    , ['format'] = { nargs = 1, impl = function( argv ) return string.format( base.unpack(argv) ) end }
     , ['split'] = { nargs = 1, impl = xp_split }
     , ['join'] = { nargs = 1, impl = xp_join }
+	, ['indexof'] = { nargs = 2, impl = xp_indexof }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
     , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( argv[2] and "!*t" or "*t", argv[1] ) end }
-    , ['date'] = { nargs = 0, impl = function( argv ) return xp_mktime( unpack(argv) ) end }
-    , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(unpack(argv)) end }
+    , ['date'] = { nargs = 0, impl = function( argv ) return xp_mktime(base.unpack(argv)) end }
+    , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(base.unpack(argv)) end }
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
     , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], argv[2] or os.time() ) end }
     , ['choose'] = { nargs = 2, impl = function( argv ) local ix = argv[1] if ix < 1 or ix > (#argv-2) then return argv[2] else return argv[ix+2] end end }
@@ -568,7 +584,7 @@ local nativeFuncs = {
     , ['iterate'] = { nargs = 2, impl = true }
     , ['map'] = { nargs = 2, impl = true }
     , ['if'] = { nargs = 2, impl = true }
-    , ['void'] = { nargs = 0, impl = function( argv ) return NULLATOM end }
+    , ['void'] = { nargs = 0, impl = function( _ ) return NULLATOM end }
     , ['list'] = { nargs = 0, impl = function( argv ) local b = deepcopy( argv ) b.__context=nil return b end }
     , ['first'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if base.type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[1] end end }
     , ['last'] = { nargs = 1, impl = function( argv ) local arr = argv[1] if base.type(arr) ~= "table" or #arr == 0 then return NULLATOM else return arr[#arr] end end }
@@ -576,7 +592,7 @@ local nativeFuncs = {
 
 -- Try to load bit module; fake it if we don't find it or not right.
 local _, bit = pcall( require, "bit" )
-if not ( type(bit) == "table" and bit.band and bit.bor and bit.bnot and bit.bxor ) then
+if not ( base.type(bit) == "table" and bit.band and bit.bor and bit.bnot and bit.bxor ) then
     bit = nil
 end
 if not bit then
@@ -882,7 +898,7 @@ local function scan_binop( expr, index )
         local st = op .. ch
         local matched = false
         k = k + 1
-        for _,f in ipairs(_M.binops) do
+        for _,f in base.ipairs(_M.binops) do
             if string.sub(f.op,1,k) == st then
                 -- matches something
                 matched = true
@@ -984,11 +1000,11 @@ _comp = function( expr )
     local lhs
 
     expr = expr or ""
-    expr = tostring(expr)
+    expr = base.tostring(expr)
     D("_comp: parse %1", expr)
 
     index,lhs = scan_token( expr, index )
-    index,lhs = parse_rpn( lhs, expr, index, MAXPREC )
+    _,lhs = parse_rpn( lhs, expr, index, MAXPREC )
     return lhs
 end
 
@@ -1006,7 +1022,7 @@ local function check_operand( v1, allow1, v2, allow2 )
             error("invalid allow1") -- bug, only string and array allowed
         else
             res = false
-            for _,t in ipairs(allow1) do
+            for _,t in base.ipairs(allow1) do
                 if vt == t then
                     res = true
                     break
@@ -1032,14 +1048,14 @@ local function coerce(val, typ)
         elseif isNull(val) then return false -- null coerces to boolean false
         end
     elseif typ == "string" then
-        if vt == "number" then return tostring(val)
+        if vt == "number" then return base.tostring(val)
         elseif vt == "boolean" then return val and "true" or "false"
         elseif isNull(val) then return "" -- null coerces to empty string within expressions
         end
     elseif typ == "number" then
         if vt == "boolean" then return val and 1 or 0
         elseif vt == "string" then
-            local n = tonumber(val,10) -- TODO ??? needs more complete parser (hex/octal/bin)
+            local n = base.tonumber(val,10) -- TODO ??? needs more complete parser (hex/octal/bin)
             if n ~= nil then return n else evalerror("Coersion from string to number failed ("..val..")") end
         end
         -- null coerces to NaN? We don't have NaN. Yet...
@@ -1050,7 +1066,7 @@ end
 
 local function isNumeric(val)
     if isNull(val) then return false end
-    local s = tonumber(val, 10)
+    local s = base.tonumber(val, 10)
     if s == nil then return false
     else return true, s
     end
@@ -1101,7 +1117,7 @@ local function fetch( stack, ctx )
             if ix ~= nil then
                 v = v[ix]
                 if v == nil then
-                    if type(ix) == "number" then
+                    if base.type(ix) == "number" then
                         if getOption( ctx, "subscriptmissnull" ) then
                             v = NULLATOM
                         else
@@ -1187,7 +1203,7 @@ _run = function( atom, ctx, stack )
                         if getOption( ctx, "subscriptmissnull" ) then
                             v = NULLATOM
                         else
-                            evalerror("Subscript out of range: " .. tostring(v2.name) .. "[" .. ix .. "]", v2.pos)
+                            evalerror("Subscript out of range: " .. base.tostring(v2.name) .. "[" .. ix .. "]", v2.pos)
                         end
                     end
                 end
@@ -1218,8 +1234,8 @@ _run = function( atom, ctx, stack )
         elseif e.op == '+' then
             -- Special case for +, which *can* concatenate strings. If both
             -- operands can be coerced to number, add; otherwise concat as strings.
-            local cannum1 = base.type( v1 ) == "number" or base.type( v1 ) == "boolean" or tonumber( v1 ) ~= nil
-            local cannum2 = base.type( v2 ) == "number" or base.type( v2 ) == "boolean" or tonumber( v2 ) ~= nil
+            local cannum1 = base.type( v1 ) == "number" or base.type( v1 ) == "boolean" or base.tonumber( v1 ) ~= nil
+            local cannum2 = base.type( v2 ) == "number" or base.type( v2 ) == "boolean" or base.tonumber( v2 ) ~= nil
             if cannum1 and cannum2 then
                 v = coerce(v1, "number") + coerce(v2, "number")
             else
@@ -1291,16 +1307,16 @@ _run = function( atom, ctx, stack )
         elseif e.op == '=' then
             D("_run: making assignment to %1", v1)
             -- Can't make assignment to reserved words
-            for j in pairs(reservedWords) do
+            for j in base.pairs(reservedWords) do
                 if j == v1.name:lower() then evalerror("Can't assign to reserved word " .. j, e.pos) end
             end
             ctx.__lvars = ctx.__lvars or {}
             if v1.index ~= nil then
                 -- Array/index assignment
-                if type(ctx.__lvars[v1.name]) ~= "table" then evalerror("Target is not an array ("..v1.name..")", e.pos) end
+                if base.type(ctx.__lvars[v1.name]) ~= "table" then evalerror("Target is not an array ("..v1.name..")", e.pos) end
                 local ix = runfetch( v1.index, ctx, stack )
                 D("_run: assignment to %1 with computed index %2", v1.name, ix)
-                if ix < 1 or type(ix) ~= "number" then evalerror("Invalid index ("..tostring(ix)..")", e.pos) end
+                if ix < 1 or base.type(ix) ~= "number" then evalerror("Invalid index ("..base.tostring(ix)..")", e.pos) end
                 ctx.__lvars[v1.name][ix] = v2
             else
                 ctx.__lvars[v1.name] = v2
@@ -1316,7 +1332,7 @@ _run = function( atom, ctx, stack )
         if v == nil then v = NULLATOM end
         if e.op == '-' then
             v = -coerce(v, "number")
-        elseif e.op == '+' then
+        elseif e.op == '+' then -- luacheck: ignore 542
             -- noop
         elseif e.op == '!' then
             if base.type(v) == "number" then
@@ -1365,7 +1381,7 @@ _run = function( atom, ctx, stack )
             local v1 = runfetch( e.args[1], ctx, stack )
             v = {}
             if v1 ~= nil and not isNull( v1 ) then
-                if type(v1) ~= "table" then evalerror("iterate() argument 1 is not array", e.pos) end
+                if base.type(v1) ~= "table" then evalerror("iterate() argument 1 is not array", e.pos) end
                 local v3  = '_'
                 if #e.args > 2 then
                     v3 = runfetch( e.args[3], ctx, stack )
@@ -1373,7 +1389,7 @@ _run = function( atom, ctx, stack )
                 local iexp = isAtom( e.args[2], CONST ) and _comp( e.args[2].value, ctx ) or e.args[2] -- handle string as expression
                 -- if not isAtom( iexp ) then evalerror("iterate() arg 2 must be expression or string containing expression", e.pos) end
                 ctx.__lvars = ctx.__lvars or {}
-                for _,xa in ipairs( v1 ) do
+                for _,xa in base.ipairs( v1 ) do
                     ctx.__lvars[v3] = xa
                     local xv = runfetch( iexp, ctx, stack )
                     if xv ~= nil and not isNull( xv ) then
@@ -1386,7 +1402,7 @@ _run = function( atom, ctx, stack )
             local v1 = runfetch( e.args[1], ctx, stack )
             v = {}
             if v1 ~= nil and not isNull( v1 ) then
-                if type(v1) ~= "table" then evalerror("map() argument 1 is not array", e.pos) end
+                if base.type(v1) ~= "table" then evalerror("map() argument 1 is not array", e.pos) end
                 local v3  = '_'
                 if #e.args > 2 then
                     v3 = runfetch( e.args[3], ctx, stack )
@@ -1399,7 +1415,7 @@ _run = function( atom, ctx, stack )
                     iexp = _comp( "__", ctx ) -- default index to pivot array
                 end
                 ctx.__lvars = ctx.__lvars or {}
-                for k,xa in ipairs( v1 ) do
+                for k,xa in base.ipairs( v1 ) do
                     if not isNull( xa ) then
                         ctx.__lvars[v3] = xa
                         ctx.__lvars['__'] = k
@@ -1451,14 +1467,14 @@ _run = function( atom, ctx, stack )
                     v.location = e.pos
                     error(v) -- that one of our errors, just pass along
                 end
-                error("Execution of function " .. e.name .. "() threw an error: " .. tostring(v))
+                error("Execution of function " .. e.name .. "() threw an error: " .. base.tostring(v))
             end
         end
     elseif isAtom( e, VREF ) then
         D("_run: handling vref, name=%1, push to stack for later eval", e.name)
         v = deepcopy(e) -- we're going to push the VREF directly (e.g. pushing atom to stack!)
     else
-        error("Bug: invalid atom type in parse tree: " .. tostring(e.__type), 0)
+        error("Bug: invalid atom type in parse tree: " .. base.tostring(e.__type), 0)
     end
 
     -- Push result to stack
@@ -1474,7 +1490,7 @@ end
 -- Compile the expression (public method)
 function _M.compile( expressionString )
     local s,v,n -- n???
-    s,v,n = pcall(_comp, expressionString)
+    s,v,_ = pcall(_comp, expressionString)
     if s then
         return  { rpn = v, source = expressionString }
     else

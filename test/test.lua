@@ -401,6 +401,12 @@ local function doStringFuncTests()
     eval("split('A,B,C,D,E', ',')", nil, nil, "Array of 5 elements")
     eval("split('F,G,H')", nil, nil, "Array of 3 elements")
     eval("join(split('Z+Y+X+W+V+U', '%+'), 'M')", "ZMYMXMWMVMU")
+	eval("indexof(list(9,8,7,6,5,4,3,2,1),7)", 3)
+	eval("indexof(list(9,8,7,6,5,4,3,2,1),4)", 6)
+	eval("indexof(list(9,8,7,6,5,4,3,2,1),19)", 0)
+	eval("indexof(list(9,8,7,6,5,4,3,2,1),6,2)", 4)
+	eval("indexof(list(9,8,7,6,5,4,3,2,1),6,5)", 0)
+	eval("indexof(null,7)", 0)
 end
 
 local function doMiscFuncTests()

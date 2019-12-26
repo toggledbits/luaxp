@@ -1,6 +1,10 @@
 # LuaXP Change Log
 
-## 1.0
+## 1.0.1
+
+* Add `indexof(array,item[,start])` function to find item in array with optional starting index. Returns 0 if item not found.
+
+## 1.0.0
 
 * Add `date(year[, month[ ,day[ ,hour[ ,min[ ,sec]]]]])` function to create datetime from parts as arguments. The current value is used for any part not provided (e.g. `date(null,1,1,0,0,0)` returns midnight Jan 1 of the current year. Trailing `null` arguments may be omitted (i.e. `date(2019,11,4)` is the same as `date(2019,11,4,null,null,null)`). Time is built in the current timezone.
 * Add `map(array[, expr[, varname]])`; similar to `iterate()`, it loops over the array, performing `expr` on each value, and builds a table with key as the original value, and the result of the expression as the value. For example, `map(list("dog","cat","fish"), _+" food")` returns a table `{ "dog"="dog food", "cat"="cat food", "fish"="fish food" }`. If either the value or the result of the expression is `null`, it is omitted from the result table. In the expression, the value is represented by the pseudo-variable `_` (underscore). If you give `varname` (third argument) to `map()`, that string will be used as the variable name instead. The special additional pseudo-variable `__` (two underscores) is populated with the index in the array of each value as processed, such that `map(list("dog","cat","fish"), __)` yields `{ "dog"=1, "fish"=3, "cat"=2 }`. If no expression is given, the default `__` (two underscores--the array index) is used (that is, `map(array)` is equivalent to `map(array, __)`).
