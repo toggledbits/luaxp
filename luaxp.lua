@@ -57,7 +57,8 @@ local TNUL = 'null'
 local NULLATOM = { __type=TNUL }
 setmetatable( NULLATOM, { __tostring=function() return "null" end } )
 
-local charmap = { t = "\t", r = "\r", n = "\n" }
+local charmap = { t = "\t", r = "\r", n = "\n",
+                  ["\\"] = "\\", ["'"] = "'", ['"'] = '"' }
 
 local reservedWords = {
       ['false']=false, ['true']=true
@@ -440,6 +441,14 @@ local function xp_mktime( yy, mm, dd, hours, mins, secs )
     return os.time(pt)
 end
 
+local function xp_enquote(s, q)
+    if base.type(s) ~= "string" then evalerror("String required") end
+    if q ~= "'" and q ~= '"' then evalerror("Illegal quotation mark") end
+    s = s:gsub("\\", "\\\\")
+    s = s:gsub(q, "\\" .. q)
+    return q .. s .. q
+end
+
 local function xp_rtrim(s)
     if base.type(s) ~= "string" then evalerror("String required") end
     return s:gsub("%s+$", "")
@@ -747,7 +756,7 @@ local function scan_fref( expr, index, name )
             -- Start of string?
             local qq = ch
             index, ch = scan_string( expr, index )
-            subexp = subexp .. qq .. ch.value .. qq
+            subexp = subexp .. xp_enquote(ch.value, qq)
         elseif ch == ',' and parenLevel == 1 then -- completed subexpression
             subexp = xp_trim( subexp )
             D("scan_fref: handling argument=%1", subexp)
