@@ -349,6 +349,7 @@ local function doMathFuncTests()
     eval("ceil(-1.2)", -1)
     eval("pow(10,2)", 100)
     eval("pow(10,-1)", 0.1)
+    eval("pow(-2,5)", -32) -- Lua semantics
     eval("min(1,9)", 1)
     eval("min(9,1)", 1)
     eval("max(1,9)", 9)
