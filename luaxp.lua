@@ -146,7 +146,7 @@ end
 
 local function xp_pow( argv )
     local b,x = base.unpack( argv or {} )
-    return math.exp(x * math.log(b))
+    return b^x
 end
 
 local function xp_select( argv )
@@ -207,7 +207,7 @@ end
 -- If mm/dd vs dd/mm is ambiguous, it tries to discern using current locale's rule.
 local function xp_parse_time( t )
     if base.type(t) == "number" then return t end -- if already numeric, assume it's already timestamp
-    if t == nil or base.tostring(t):lower() == "now" then return os.time() end
+    if t == nil or isNull( t ) or base.tostring(t):lower() == "now" then return os.time() end
     t = base.tostring(t) -- force string
     local now = os.time()
     local nd = os.date("*t", now) -- consistent
@@ -429,12 +429,12 @@ end
 -- Create a timestamp for date/time in the current timezone or UTC by parts
 local function xp_mktime( yy, mm, dd, hours, mins, secs )
     local pt = os.date("*t")
-    pt.year = base.tonumber(yy) or pt.year
-    pt.month = base.tonumber(mm) or pt.month
-    pt.day = base.tonumber(dd) or pt.day
-    pt.hour = base.tonumber(hours) or pt.hour
-    pt.min = base.tonumber(mins) or pt.min
-    pt.sec = base.tonumber(secs) or pt.sec
+    pt.year = isNull(yy) and pt.year or base.tonumber(yy) or pt.year
+    pt.month = isNull(mm) and pt.month or base.tonumber(mm) or pt.month
+    pt.day = isNull(dd) and pt.day or base.tonumber(dd) or pt.day
+    pt.hour = isNull(hours) and pt.hour or base.tonumber(hours) or pt.hour
+    pt.min = isNull(mins) and pt.min or base.tonumber(mins) or pt.min
+    pt.sec = isNull(secs) and pt.sec or base.tonumber(secs) or pt.sec
     pt.isdst = nil
     pt.yday = nil
     pt.wday = nil
@@ -573,11 +573,11 @@ local nativeFuncs = {
     , ['join'] = { nargs = 1, impl = xp_join }
 	, ['indexof'] = { nargs = 2, impl = xp_indexof }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
-    , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( argv[2] and "!*t" or "*t", argv[1] ) end }
+    , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( argv[2] and "!*t" or "*t", (not isNull( argv[1] ) ) and argv[1] or nil ) end }
     , ['date'] = { nargs = 0, impl = function( argv ) return xp_mktime(base.unpack(argv)) end }
     , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(base.unpack(argv)) end }
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
-    , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], argv[2] or os.time() ) end }
+    , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], isNull( argv[2] ) and os.time or argv[2] ) end }
     , ['choose'] = { nargs = 2, impl = function( argv ) local ix = argv[1] if ix < 1 or ix > (#argv-2) then return argv[2] else return argv[ix+2] end end }
     , ['select'] = { nargs = 3, impl = xp_select }
     , ['keys'] = { nargs = 1, impl = xp_keys }
