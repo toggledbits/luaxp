@@ -1,5 +1,15 @@
 # LuaXP Change Log
 
+DEPRECATION ANNOUNCEMENT: AS OF LUAXP 1.1, THE SEARCH FOR LOCAL VARIABLES AS TOP-LEVEL KEYS IN THE CONTEXT WILL BE REMOVED. FOR SOME TIME, THE CORRECT LOCATION FOR LOCAL VARIABLES HAS BEEN WITHIN THE `__lvars` KEY.
+
+## 1.0.2
+
+* Add array manipulation functions `push( array, element [, maxelements] )`, `pop( array )`, `unshift( array, element [,maxelements] )`, `shift( array )`. The `push()` and `unshift()` functions add an element to the end or front of the array, respectively (i.e. `push()` appends, `unshift()` prepends); the array is modified in place, and is also returned as the function value. Therefore, the `array` argument may only be the name of an array, it cannot be an expression (e.g. `push( d, 1 )` is valid, while `push( list(), 1 )` is not). If the `maxelements` argument is given, the array size is limited to the provided value, with excess elements falling off the "far" end of the array. The `pop()` and `shift()` functions remove and return the last and first, respectively, elements from the array. They return `null` if the array is empty. The array used does not need to exist prior to use--if the named array does not exist, these functions will create it as an empty array before performing their respective operations. That is, assuming variable `d` does not exist, `push( d, 1 )` has the same effect as `d=list()` followed by `push( d, 1 )`. If the named `array` variable exists but is not an array, a runtime error occurs.
+* Add function `sum( ... )` which returns the sum of its arguments. Strings, nulls, and other data that cannot be coerced to a number are skipped silently. Any arrays are traversed and their elements handled in the same way, for example, `sum(list(4,5,6,list(1,2,3)))` returns 24.
+* Add function `count( ... )` which returns the number of non-null arguments. If any argument is an array, the array's elements are scanned and included in the count. That is, `count(1,null,list(2,3,null,4))` is 4. This allows `count()` and `sum()` to work together to calculate reliable means when the data contains nulls or sub-lists. This approach is also consistent with `min()` and `max()`.
+* The function `replace( string, fstr, rstr )` was previously documented but never implemented. It now exists. It is an analog for Lua's `string.gsub()` (e.g. patterns apply), except that a function/expression cannot be used as the replacement argument `rstr` currently; only strings may be used. It returns the modified string.
+* Additional tests for the above functions, and several test jig updates for more current handling of local variables in the test environment, have been implemented.
+
 ## 1.0.1
 
 * Add `indexof(array,item[,start])` function to find item in array with optional starting index. Returns 0 if item not found.

@@ -41,6 +41,9 @@ _M.binops = {
     , { op='=',  prec=14 }
 }
 
+local ARRAYMAX = 1000 -- max length of unbounded array
+local ARRAYNULL = false -- default false = cannot insert NULL as array element (push, unshift)
+
 local MAXPREC = 99 -- value doesn't matter as long as it's >= any used in binops
 
 local base = _G
@@ -134,6 +137,8 @@ local function isNull( v )
     return isAtom( v, TNUL )
 end
 
+local function is_non( v ) return v == nil or isNull( v ) end
+
 local function comperror(msg, loc)
     D("throwing comperror at %1: %2", loc, msg)
     return base.error( { __source='luaxp', ['type']='compile', location=loc, message=msg } )
@@ -151,7 +156,7 @@ end
 
 local function xp_select( argv )
     local obj,keyname,keyval = base.unpack( argv or {} )
-	if isNull(obj) then return NULLATOM end
+    if is_non(obj) then return NULLATOM end
     if base.type(obj) ~= "table" then evalerror("select() requires table/object arg 1") end
     keyname = base.tostring(keyname)
     keyval = base.tostring(keyval)
@@ -207,7 +212,7 @@ end
 -- If mm/dd vs dd/mm is ambiguous, it tries to discern using current locale's rule.
 local function xp_parse_time( t )
     if base.type(t) == "number" then return t end -- if already numeric, assume it's already timestamp
-    if t == nil or isNull( t ) or base.tostring(t):lower() == "now" then return os.time() end
+    if is_non( t ) or base.tostring(t):lower() == "now" then return os.time() end
     t = base.tostring(t) -- force string
     local now = os.time()
     local nd = os.date("*t", now) -- consistent
@@ -429,12 +434,12 @@ end
 -- Create a timestamp for date/time in the current timezone or UTC by parts
 local function xp_mktime( yy, mm, dd, hours, mins, secs )
     local pt = os.date("*t")
-    pt.year = isNull(yy) and pt.year or base.tonumber(yy) or pt.year
-    pt.month = isNull(mm) and pt.month or base.tonumber(mm) or pt.month
-    pt.day = isNull(dd) and pt.day or base.tonumber(dd) or pt.day
-    pt.hour = isNull(hours) and pt.hour or base.tonumber(hours) or pt.hour
-    pt.min = isNull(mins) and pt.min or base.tonumber(mins) or pt.min
-    pt.sec = isNull(secs) and pt.sec or base.tonumber(secs) or pt.sec
+    pt.year = is_non(yy) and pt.year or base.tonumber(yy) or pt.year
+    pt.month = is_non(mm) and pt.month or base.tonumber(mm) or pt.month
+    pt.day = is_non(dd) and pt.day or base.tonumber(dd) or pt.day
+    pt.hour = is_non(hours) and pt.hour or base.tonumber(hours) or pt.hour
+    pt.min = is_non(mins) and pt.min or base.tonumber(mins) or pt.min
+    pt.sec = is_non(secs) and pt.sec or base.tonumber(secs) or pt.sec
     pt.isdst = nil
     pt.yday = nil
     pt.wday = nil
@@ -492,17 +497,22 @@ local function xp_join( argv )
 end
 
 local function xp_indexof( args )
-	local arr, item, start = base.unpack( args )
-	start = start or 1
-	if isNull( arr ) then return 0 end
-	if base.type(arr) ~= "table" then evalerror("Array/table required") end
-	for k,v in base.ipairs( arr ) do
-		if k >= start then
-			if isNull( v ) and isNull( item ) then return k end
-			if v == item then return k end
-		end
-	end
-	return 0
+    local arr, item, start = base.unpack( args )
+    start = start or 1
+    if is_non( arr ) then return 0 end
+    if base.type(arr) ~= "table" then evalerror("Array/table required") end
+    for k,v in base.ipairs( arr ) do
+        if k >= start then
+            if isNull( v ) and is_non( item ) then return k end
+            if v == item then return k end
+        end
+    end
+    return 0
+end
+
+local function xp_replace( args )
+    local str, fpat, rpat = base.unpack( args )
+    return string.gsub( tostring(str), tostring(fpat), tostring(rpat or "") )
 end
 
 local function xp_min( argv )
@@ -533,6 +543,48 @@ local function xp_max( argv )
     return res
 end
 
+-- sum( arg[, ...] ) returns the sum of its arguments. If any argument is
+-- an array, the array contents are summed. Nulls do not count to the sum,
+-- thus if no valid values are found, the result may be null. Strings are
+-- coerced to numbers if possible.
+local function xp_sum( args )
+	local function tsum( v )
+		local t = NULLATOM
+		if is_non( v ) then
+			-- nada
+		elseif type(v) == "table" then
+			for _,n in ipairs( v ) do
+				local d = tsum( n )
+				if not is_non( d ) then t = ( is_non(t) and 0 or t ) + d end
+			end
+		elseif type(v) == "string" or type(v) == "number" then
+			t = tonumber( v ) or NULLATOM
+		end
+		return t
+	end
+	return tsum( args )
+end
+
+-- count( arg[, ...] ) returns the number of non-null elements in the arguments.
+-- Handling of arguments is identical to sum(), so average/mean is easily computed
+-- via sum( args ) / count( args ).
+local function xp_count( args )
+	local function tcount( v )
+		if is_non( v ) then
+			return 0
+		elseif type( v ) == "table" then
+			local t = 0
+			for _,n in ipairs( v ) do
+				t = t + tcount( n )
+			end
+			return t
+		else
+			return 1
+		end
+	end
+	return tcount( args )
+end
+
 local msgNNA1 = "Non-numeric argument 1"
 
 -- ??? All these tostrings() need to be coerce()
@@ -556,11 +608,18 @@ local nativeFuncs = {
     , ['sqrt']  = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.sqrt(n) end }
     , ['min']   = { nargs = 1, impl = xp_min }
     , ['max']   = { nargs = 1, impl = xp_max }
+	, ['push'] = { nargs = 2, impl = true }
+	, ['pop'] = { nargs = 1, impl = true }
+	, ['unshift'] = { nargs = 2, impl = true }
+	, ['shift' ] = { nargs = 1, impl = true }
+	, ['sum' ] = { nargs = 1, impl = xp_sum }
+	, ['count'] = { nargs = 1, impl = xp_count }
     , ['randomseed']   = { nargs = 0, impl = function( argv ) local s = argv[1] or os.time() math.randomseed(s) return s end }
     , ['random']   = { nargs = 0, impl = function( argv ) return math.random( base.unpack(argv) ) end }
     , ['len']   = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return 0 elseif base.type(argv[1]) == "table" then return xp_tlen(argv[1]) else return string.len(base.tostring(argv[1])) end end }
     , ['sub']   = { nargs = 2, impl = function( argv ) local st = base.tostring(argv[1]) local p = argv[2] local l = (argv[3] or -1) return string.sub(st, p, l) end }
     , ['find']  = { nargs = 2, impl = function( argv ) local st = base.tostring(argv[1]) local p = base.tostring(argv[2]) local i = argv[3] or 1 return (string.find(st, p, i) or 0) end }
+    , ['replace'] = { nargs = 3, impl = xp_replace }
     , ['upper'] = { nargs = 1, impl = function( argv ) return string.upper(base.tostring(argv[1])) end }
     , ['lower'] =  { nargs = 1, impl = function( argv ) return string.lower(base.tostring(argv[1])) end }
     , ['trim'] = { nargs = 1, impl = function( argv ) return xp_trim(base.tostring(argv[1])) end }
@@ -571,7 +630,7 @@ local nativeFuncs = {
     , ['format'] = { nargs = 1, impl = function( argv ) return string.format( base.unpack(argv) ) end }
     , ['split'] = { nargs = 1, impl = xp_split }
     , ['join'] = { nargs = 1, impl = xp_join }
-	, ['indexof'] = { nargs = 2, impl = xp_indexof }
+    , ['indexof'] = { nargs = 2, impl = xp_indexof }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
     , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( argv[2] and "!*t" or "*t", (not isNull( argv[1] ) ) and argv[1] or nil ) end }
     , ['date'] = { nargs = 0, impl = function( argv ) return xp_mktime(base.unpack(argv)) end }
@@ -1426,6 +1485,92 @@ _run = function( atom, ctx, stack )
                     end
                 end
             end
+		elseif e.name == "push" then
+			if #e.args < 2 then evalerror("push() at least two arguments are required ", e.pos) end
+			if e.args[1].__type ~= "vref" then evalerror("push() argument 1 must be array name", e.pos) end
+			local nv = e.args[1].name
+			local xv = runfetch( e.args[2], ctx, stack )
+			local nmax = false
+			if #e.args > 2 then
+				nmax = runfetch( e.args[3], ctx, stack )
+				if base.type(nmax) ~= "number" or nmax < 1 then evalerror("push() argument 3 must be numeric > 0", e.pos) end
+			end
+			if (ctx.__lvars or {})[nv] then
+				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				v = ctx.__lvars[nv]
+			elseif ctx[nv] then
+				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				v = ctx[nv]
+			else
+				ctx.__lvars = ctx.__lvars or {}
+				v = {}
+				ctx.__lvars[nv] = v
+			end
+			if ARRAYNULL or not isNull( xv ) then
+				while nmax and #v > 0 and #v >= (tonumber(nmax) or 0) do table.remove( v, 1 ) end
+				if not nmax and #v >= ARRAYMAX then evalerror("Max length of unbounded array exceeded") end
+				table.insert( v, xv )
+			end
+		elseif e.name == "pop" then
+			if #e.args < 1 then evalerror("pop() missing required argument ", e.pos) end
+			if e.args[1].__type ~= "vref" then evalerror("pop() argument 1 must be array name", e.pos) end
+			local nv = e.args[1].name
+			local av
+			if (ctx.__lvars or {})[nv] then
+				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				av = ctx.__lvars[nv]
+			elseif ctx[nv] then
+				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				av = ctx[nv]
+			else
+				ctx.__lvars = ctx.__lvars or {}
+				av = {}
+				ctx.__lvars[nv] = av
+			end
+			v = table.remove( av ) or NULLATOM
+		elseif e.name == "unshift" then
+			if #e.args < 2 then evalerror("unshift() at least two arguments are required ", e.pos) end
+			if e.args[1].__type ~= "vref" then evalerror("unshift() argument 1 must be array name", e.pos) end
+			local nv = e.args[1].name
+			local xv = runfetch( e.args[2], ctx, stack )
+			local nmax = false
+			if #e.args > 2 then
+				nmax = runfetch( e.args[3], ctx, stack )
+				if base.type(nmax) ~= "number" or nmax < 1 then evalerror("unshift() argument 3 must be numeric > 0", e.pos) end
+			end
+			if (ctx.__lvars or {})[nv] then
+				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				v = ctx.__lvars[nv]
+			elseif ctx[nv] then
+				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				v = ctx[nv]
+			else
+				ctx.__lvars = ctx.__lvars or {}
+				v = {}
+				ctx.__lvars[nv] = v
+			end
+			if ARRAYNULL or not isNull( xv ) then
+				while nmax and #v > 0 and #v >= (tonumber(nmax) or 0) do table.remove( v ) end
+				if not nmax and #v >= ARRAYMAX then evalerror("Max length of unbounded array exceeded") end
+				table.insert( v, 1, xv )
+			end
+		elseif e.name == "shift" then
+			if #e.args < 1 then evalerror("shift() missing required argument", e.pos) end
+			if e.args[1].__type ~= "vref" then evalerror("shift() argument 1 must be array name", e.pos) end
+			local nv = e.args[1].name
+			local av
+			if (ctx.__lvars or {})[nv] then
+				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				av = ctx.__lvars[nv]
+			elseif ctx[nv] then
+				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+				av = ctx[nv]
+			else
+				ctx.__lvars = ctx.__lvars or {}
+				av = {}
+				ctx.__lvars[nv] = av
+			end
+			v = table.remove( av, 1 ) or NULLATOM
         else
             -- Parse our arguments and put each on the stack; push them in reverse so they pop correctly (first to pop is first passed)
             local v1, argv

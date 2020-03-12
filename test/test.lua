@@ -45,7 +45,7 @@ end
 -- Uncomment the line below to enable debugging
 --L._DEBUG = debugPrint
 
-local ctx = {}
+local ctx = { __lvars={} }
 local nTest = 0
 local nErr = 0
 local nSkip = 0
@@ -180,7 +180,7 @@ local function doTimeTests()
     eval("strftime('%c', date(2020))", nil, nil, "Result should be year 2020 today's month, day, and current time")
     eval("strftime('%c', date(null,1,1,0,0,0))", nil, nil, "Result is midnight Jan 1 of this year")
 
-    if ctx.response ~= nil then
+    if ctx.__lvars.response then
         eval("strftime(\"%c\", response.loadtime)", nil, nil, "The result should comport with the loadtime value in sample.json")
     else
         skip("strftime(\"%c\", response.loadtime)", "file sample1.json could not be loaded")
@@ -350,6 +350,7 @@ local function doMathFuncTests()
     eval("pow(10,2)", 100)
     eval("pow(10,-1)", 0.1)
     eval("pow(-2,5)", -32) -- Lua semantics
+    eval("pow(-10,2)", 100) -- Lua semantics
     eval("min(1,9)", 1)
     eval("min(9,1)", 1)
     eval("max(1,9)", 9)
@@ -377,6 +378,9 @@ local function doStringFuncTests()
     eval("sub('[in brackets]', 2, -2)", "in brackets")
     eval("find('The rain in Spain stays mainly in the plain.', 'not there')", 0)
     eval("find('The rain in Spain stays mainly in the plain.', 'plain.')", 39)
+	eval("replace('Flog your Bog', 'og', 'ic')", "Flic your Bic")
+	eval("replace('Mysterious string', 'abc', 'zzz')", "Mysterious string")
+	eval("replace('abcdefghijklmnopqrstuvwxyz', '[a-f]', '_')", "______ghijklmnopqrstuvwxyz")
     eval("upper('The rain in Spain stays mainly in the plain.')", "THE RAIN IN SPAIN STAYS MAINLY IN THE PLAIN.")
     eval("lower('The rain in Spain stays mainly in the plain.')", "the rain in spain stays mainly in the plain.")
     eval("format('I like %s, I buy %dkg at a time.', 'cheese', 5)", "I like cheese, I buy 5kg at a time.")
@@ -429,21 +433,56 @@ local function doMiscFuncTests()
     eval("last('cat')", L.NULL, nil, "Invalid data returns null", "Test constant")
     eval("last(tonumber('123'))", L.NULL, nil, "Invalid data returns null", "Test expression")
 
-    if ctx.response ~= nil then
-        eval("#keys(response.rooms)", 23)
+	ctx.__lvars.d = nil -- Make sure local variable does not exist
+	ctx.d = nil -- "old" way, too
+	eval('push(d, "alpha")', nil, nil, "One element array")
+	eval('#d', 1)
+	eval('push(d, "beta")', nil, nil, "Two element array")
+	eval('#d', 2)
+	eval('push(d, "gamma")', nil, nil, "Three element array")
+	eval('#d', 3)
+	eval('pop(d)', "gamma")
+	eval('pop(d)', "beta")
+	eval('pop(d)', "alpha")
+	eval('pop(d)', L.NULL)
+	eval('d=list()', nil, nil, "Set up for test")
+	eval("unshift(d, 'globe')", nil, nil, "One element array")
+	eval("unshift(d, 'pencil')", nil, nil, "Two element array")
+	eval("unshift(d, 'chair')", nil, nil, "Three element array")
+	eval('#d', 3)
+	eval("d[3]", "globe")
+	eval("d[2]", "pencil")
+	eval("d[1]", "chair")
+	eval("shift(d)", "chair")
+	eval("shift(d)", "pencil")
+	eval("shift(d)", "globe")
+	eval("shift(d)", L.NULL)
+	
+	eval("d=list( 5, 6, 7, list( 1, 2, 3 ) )", nil, nil, "Setup for next test")
+	eval("len(d)", 4)
+	eval("#d", 4)
+	eval("count(d)", 6)
+	eval("sum(d)", 24)
+	ctx.__lvars.d = nil -- clean up
+
+    if ctx.__lvars.response then
+        eval("#keys(response.rooms)", #ctx.__lvars.response.rooms)
         eval("i=''", "",nil,"Setup for next test")
         eval("iterate(list(1,2,3,4,5,6), '_' )", nil, nil, "Returns array of 6 elements")
         eval("iterate(list(1,2,3,4,5,6), _ )", nil, nil, "Returns array of 6 elements; same result as previous")
+		ctx.__lvars.i = "" -- setup for next
         eval("#iterate(response.rooms,'void(i = i + \",\" + _.name)')", 0, nil, "Iterator using anonymous upvalue and empty result array")
         eval("#i", 254, nil, "Expected length of string may change if data altered")
         eval('#iterate(response.devices,"if(device.room==10,device.id)","device")', 7, nil, "Expected number of matching rooms may change if data altered")
         eval('#iterate(response.devices, if(device.room==10,device.id) , "device" )', 7, nil, "(LATE EVAL) Expected number of matching rooms may change if data altered")
-        eval('map(list(6,5,4,3,2,1), _*16)', nil, nil, "Returns 6 elements with val = 16 x key (e.g. 3=48)")
-        eval('map(list(6,5,4,3,2,1), "_*16")', nil, nil, "Result same as previous")
-        eval('map(list("dog","cat","goldfish","ferret"))', nil, nil, "Returns table (key=val): dog=1,cat=2,goldfish=3,ferret=4")
+		ctx.__lvars.i = nil -- clean up
     else
         nSkip = nSkip + 9
     end
+
+	eval('map(list(6,5,4,3,2,1), _*16)', nil, nil, "Returns 6 elements with val = 16 x key (e.g. 3=48)")
+	eval('map(list(6,5,4,3,2,1), "_*16")', nil, nil, "Result same as previous")
+	eval('map(list("dog","cat","goldfish","ferret"))', nil, nil, "Returns table (key=val): dog=1,cat=2,goldfish=3,ferret=4")
 
     --[[ Not yet, maybe some day
     eval("Z=list()", nil, nil, "Set up for next test")
@@ -454,24 +493,26 @@ end
 
 local function doMiscSyntaxTests()
     -- Variable assignment
-    ctx.__lvars = ctx.__lvars or {}
-    ctx.__lvars.lv = "lv"
-    ctx.ctv = "ctv"
-    ctx.k = nil ctx.__lvars.k = nil
-    eval("lv", "lv") -- value sourced from __lvars (new style)
-    eval("ctv", "ctv") -- value sourced from ctx (old style, deprecated)
-    eval("i=25",25)
+    ctx.__lvars.lv = "__lv"
+    ctx.ctv = "__ctv"
+    eval("lv", "__lv") -- value sourced from __lvars (new style)
+    eval("ctv", "__ctv") -- value sourced from ctx (old style, deprecated)
+
+    ctx.i = nil ctx.__lvars.i = nil
+    eval("i=25", 25)
+    if ctx.__lvars.i ~= 25 then fail("VARIABLE NOT FOUND IN __LVARS") end
     eval("i", 25)
-    if ctx.__lvars.i == nil or ctx.__lvars.i ~= 25 then fail("VARIABLE NOT FOUND IN __LVARS") end
+
+    ctx.k = nil ctx.__lvars.k = nil
     eval("k", nil, "Undefined var")
 
     -- Nesting
     eval("min(70,max(20,min(60,max(30,min(50,40)))))", 40)
 
     -- Quoted identifiers, subreferences, select()
-    if ctx.response ~= nil then
-        ctx.response['bad name!'] = ctx.response.loadtime
-        eval("['response'].['bad name!']", ctx.response.loadtime, nil, "Quoted identifiers allow chars otherwise not permitted")
+    if ctx.__lvars.response then
+        ctx.__lvars.response['bad name!'] = ctx.__lvars.response.loadtime
+        eval("['response'].['bad name!']", ctx.__lvars.response.loadtime, nil, "Quoted identifiers allow chars otherwise not permitted")
         eval("response.notthere", L.NULL)
         eval("response.notthere.reallynotthere", nil, "Can't dereference through null")
         ctx.__options = { nullderefnull=true }
@@ -569,7 +610,7 @@ local function doRegressionTests()
 
     -- For this test, use special context.
     local s = '{"coord":{"lon":-84.56,"lat":33.39},"weather":[{"id":800,"main":"Clear","description":"clear sky","icon":"01d"}],"base":"stations","main":{"temp":281.29,"pressure":1026,"humidity":23,"temp_min":278.15,"temp_max":285.15},"visibility":16093,"wind":{"speed":5.1,"deg":150},"clouds":{"all":1},"dt":1517682900,"sys":{"type":1,"id":789,"message":0.0041,"country":"US","sunrise":1517661125,"sunset":1517699557},"id":0,"name":"Peachtree City","cod":200}'
-    ctx = { response = json.decode(s) }
+    ctx = { __lvars={ response = json.decode(s) } }
     eval("response.weather[1].description", "clear sky")
     eval("if( response.fuzzball==null, 'NO DATA', response.fuzzball.description )", "NO DATA", nil, "Late eval")
     eval("if( response['fuzzball']==null, 'NO DATA', response.fuzzball.description )", "NO DATA", nil, "Late eval")
@@ -588,7 +629,7 @@ if json then
     if file then
         local s = file:read("*all")
         file:close()
-        ctx.response = json.decode(s)
+        ctx.__lvars.response = json.decode(s)
     else
     print(RED.."JSON data could not be loaded!"..RESET)
     end
@@ -611,6 +652,6 @@ doRegressionTests()
 
 print("")
 print(string.format("Using module %s %s, ran %d tests, %d skipped, %d errors.", moduleName, tostring(L._VERSION), nTest, nSkip, nErr))
-if ctx.response == nil then
+if not ctx.__lvars.response then
     print(RED.."JSON data not loaded, some tests skipped"..RESET)
 end
