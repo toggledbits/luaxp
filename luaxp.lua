@@ -49,6 +49,7 @@ local MAXPREC = 99 -- value doesn't matter as long as it's >= any used in binops
 local base = _G
 local string = require("string")
 local math = require("math")
+local tostring = base.tostring
 
 local CONST = 'const'
 local VREF = 'vref'
@@ -521,6 +522,8 @@ local function xp_min( argv )
         local bv = v
         if base.type(v) == "table" then
             bv = xp_min( v )
+        elseif base.type(v) == "string" then
+            bv = tonumber( v )
         end
         if base.type(bv)=="number" and ( isNull(res) or bv < res ) then
             res = bv
@@ -535,6 +538,8 @@ local function xp_max( argv )
         local bv = v
         if base.type(v) == "table" then
             bv = xp_max( v )
+        elseif base.type(v) == "string" then
+            bv = tonumber( v )
         end
         if base.type(bv)=="number" and ( isNull(res) or bv > res ) then
             res = bv
@@ -548,41 +553,41 @@ end
 -- thus if no valid values are found, the result may be null. Strings are
 -- coerced to numbers if possible.
 local function xp_sum( args )
-	local function tsum( v )
-		local t = NULLATOM
-		if is_non( v ) then
-			-- nada
-		elseif type(v) == "table" then
-			for _,n in ipairs( v ) do
-				local d = tsum( n )
-				if not is_non( d ) then t = ( is_non(t) and 0 or t ) + d end
-			end
-		elseif type(v) == "string" or type(v) == "number" then
-			t = tonumber( v ) or NULLATOM
-		end
-		return t
-	end
-	return tsum( args )
+    local function tsum( v )
+        local t = NULLATOM
+        if is_non( v ) then
+            -- nada
+        elseif type(v) == "table" then
+            for _,n in base.ipairs( v ) do
+                local d = tsum( n )
+                if not is_non( d ) then t = ( is_non(t) and 0 or t ) + d end
+            end
+        elseif type(v) == "string" or type(v) == "number" then
+            t = tonumber( v ) or NULLATOM
+        end
+        return t
+    end
+    return tsum( args )
 end
 
 -- count( arg[, ...] ) returns the number of non-null elements in the arguments.
 -- Handling of arguments is identical to sum(), so average/mean is easily computed
 -- via sum( args ) / count( args ).
 local function xp_count( args )
-	local function tcount( v )
-		if is_non( v ) then
-			return 0
-		elseif type( v ) == "table" then
-			local t = 0
-			for _,n in ipairs( v ) do
-				t = t + tcount( n )
-			end
-			return t
-		else
-			return 1
-		end
-	end
-	return tcount( args )
+    local function tcount( v )
+        if is_non( v ) then
+            return 0
+        elseif type( v ) == "table" then
+            local t = 0
+            for _,n in base.ipairs( v ) do
+                t = t + tcount( n )
+            end
+            return t
+        else
+            return 1
+        end
+    end
+    return tcount( args )
 end
 
 local msgNNA1 = "Non-numeric argument 1"
@@ -608,12 +613,12 @@ local nativeFuncs = {
     , ['sqrt']  = { nargs = 1, impl = function( argv ) local n = base.tonumber( argv[1] ) or evalerror(msgNNA1) return math.sqrt(n) end }
     , ['min']   = { nargs = 1, impl = xp_min }
     , ['max']   = { nargs = 1, impl = xp_max }
-	, ['push'] = { nargs = 2, impl = true }
-	, ['pop'] = { nargs = 1, impl = true }
-	, ['unshift'] = { nargs = 2, impl = true }
-	, ['shift' ] = { nargs = 1, impl = true }
-	, ['sum' ] = { nargs = 1, impl = xp_sum }
-	, ['count'] = { nargs = 1, impl = xp_count }
+    , ['push'] = { nargs = 2, impl = true }
+    , ['pop'] = { nargs = 1, impl = true }
+    , ['unshift'] = { nargs = 2, impl = true }
+    , ['shift' ] = { nargs = 1, impl = true }
+    , ['sum' ] = { nargs = 1, impl = xp_sum }
+    , ['count'] = { nargs = 1, impl = xp_count }
     , ['randomseed']   = { nargs = 0, impl = function( argv ) local s = argv[1] or os.time() math.randomseed(s) return s end }
     , ['random']   = { nargs = 0, impl = function( argv ) return math.random( base.unpack(argv) ) end }
     , ['len']   = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return 0 elseif base.type(argv[1]) == "table" then return xp_tlen(argv[1]) else return string.len(base.tostring(argv[1])) end end }
@@ -1485,92 +1490,92 @@ _run = function( atom, ctx, stack )
                     end
                 end
             end
-		elseif e.name == "push" then
-			if #e.args < 2 then evalerror("push() at least two arguments are required ", e.pos) end
-			if e.args[1].__type ~= "vref" then evalerror("push() argument 1 must be array name", e.pos) end
-			local nv = e.args[1].name
-			local xv = runfetch( e.args[2], ctx, stack )
-			local nmax = false
-			if #e.args > 2 then
-				nmax = runfetch( e.args[3], ctx, stack )
-				if base.type(nmax) ~= "number" or nmax < 1 then evalerror("push() argument 3 must be numeric > 0", e.pos) end
-			end
-			if (ctx.__lvars or {})[nv] then
-				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				v = ctx.__lvars[nv]
-			elseif ctx[nv] then
-				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				v = ctx[nv]
-			else
-				ctx.__lvars = ctx.__lvars or {}
-				v = {}
-				ctx.__lvars[nv] = v
-			end
-			if ARRAYNULL or not isNull( xv ) then
-				while nmax and #v > 0 and #v >= (tonumber(nmax) or 0) do table.remove( v, 1 ) end
-				if not nmax and #v >= ARRAYMAX then evalerror("Max length of unbounded array exceeded") end
-				table.insert( v, xv )
-			end
-		elseif e.name == "pop" then
-			if #e.args < 1 then evalerror("pop() missing required argument ", e.pos) end
-			if e.args[1].__type ~= "vref" then evalerror("pop() argument 1 must be array name", e.pos) end
-			local nv = e.args[1].name
-			local av
-			if (ctx.__lvars or {})[nv] then
-				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				av = ctx.__lvars[nv]
-			elseif ctx[nv] then
-				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				av = ctx[nv]
-			else
-				ctx.__lvars = ctx.__lvars or {}
-				av = {}
-				ctx.__lvars[nv] = av
-			end
-			v = table.remove( av ) or NULLATOM
-		elseif e.name == "unshift" then
-			if #e.args < 2 then evalerror("unshift() at least two arguments are required ", e.pos) end
-			if e.args[1].__type ~= "vref" then evalerror("unshift() argument 1 must be array name", e.pos) end
-			local nv = e.args[1].name
-			local xv = runfetch( e.args[2], ctx, stack )
-			local nmax = false
-			if #e.args > 2 then
-				nmax = runfetch( e.args[3], ctx, stack )
-				if base.type(nmax) ~= "number" or nmax < 1 then evalerror("unshift() argument 3 must be numeric > 0", e.pos) end
-			end
-			if (ctx.__lvars or {})[nv] then
-				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				v = ctx.__lvars[nv]
-			elseif ctx[nv] then
-				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				v = ctx[nv]
-			else
-				ctx.__lvars = ctx.__lvars or {}
-				v = {}
-				ctx.__lvars[nv] = v
-			end
-			if ARRAYNULL or not isNull( xv ) then
-				while nmax and #v > 0 and #v >= (tonumber(nmax) or 0) do table.remove( v ) end
-				if not nmax and #v >= ARRAYMAX then evalerror("Max length of unbounded array exceeded") end
-				table.insert( v, 1, xv )
-			end
-		elseif e.name == "shift" then
-			if #e.args < 1 then evalerror("shift() missing required argument", e.pos) end
-			if e.args[1].__type ~= "vref" then evalerror("shift() argument 1 must be array name", e.pos) end
-			local nv = e.args[1].name
-			local av
-			if (ctx.__lvars or {})[nv] then
-				if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				av = ctx.__lvars[nv]
-			elseif ctx[nv] then
-				if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
-				av = ctx[nv]
-			else
-				ctx.__lvars = ctx.__lvars or {}
-				av = {}
-				ctx.__lvars[nv] = av
-			end
-			v = table.remove( av, 1 ) or NULLATOM
+        elseif e.name == "push" then
+            if #e.args < 2 then evalerror("push() at least two arguments are required ", e.pos) end
+            if e.args[1].__type ~= "vref" then evalerror("push() argument 1 must be array name", e.pos) end
+            local nv = e.args[1].name
+            local xv = runfetch( e.args[2], ctx, stack )
+            local nmax = false
+            if #e.args > 2 then
+                nmax = runfetch( e.args[3], ctx, stack )
+                if base.type(nmax) ~= "number" or nmax < 1 then evalerror("push() argument 3 must be numeric > 0", e.pos) end
+            end
+            if (ctx.__lvars or {})[nv] then
+                if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                v = ctx.__lvars[nv]
+            elseif ctx[nv] then
+                if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                v = ctx[nv]
+            else
+                ctx.__lvars = ctx.__lvars or {}
+                v = {}
+                ctx.__lvars[nv] = v
+            end
+            if ARRAYNULL or not isNull( xv ) then
+                while nmax and #v > 0 and #v >= (tonumber(nmax) or 0) do table.remove( v, 1 ) end
+                if not nmax and #v >= ARRAYMAX then evalerror("Max length of unbounded array exceeded") end
+                table.insert( v, xv )
+            end
+        elseif e.name == "pop" then
+            if #e.args < 1 then evalerror("pop() missing required argument ", e.pos) end
+            if e.args[1].__type ~= "vref" then evalerror("pop() argument 1 must be array name", e.pos) end
+            local nv = e.args[1].name
+            local av
+            if (ctx.__lvars or {})[nv] then
+                if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                av = ctx.__lvars[nv]
+            elseif ctx[nv] then
+                if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                av = ctx[nv]
+            else
+                ctx.__lvars = ctx.__lvars or {}
+                av = {}
+                ctx.__lvars[nv] = av
+            end
+            v = table.remove( av ) or NULLATOM
+        elseif e.name == "unshift" then
+            if #e.args < 2 then evalerror("unshift() at least two arguments are required ", e.pos) end
+            if e.args[1].__type ~= "vref" then evalerror("unshift() argument 1 must be array name", e.pos) end
+            local nv = e.args[1].name
+            local xv = runfetch( e.args[2], ctx, stack )
+            local nmax = false
+            if #e.args > 2 then
+                nmax = runfetch( e.args[3], ctx, stack )
+                if base.type(nmax) ~= "number" or nmax < 1 then evalerror("unshift() argument 3 must be numeric > 0", e.pos) end
+            end
+            if (ctx.__lvars or {})[nv] then
+                if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                v = ctx.__lvars[nv]
+            elseif ctx[nv] then
+                if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                v = ctx[nv]
+            else
+                ctx.__lvars = ctx.__lvars or {}
+                v = {}
+                ctx.__lvars[nv] = v
+            end
+            if ARRAYNULL or not isNull( xv ) then
+                while nmax and #v > 0 and #v >= (tonumber(nmax) or 0) do table.remove( v ) end
+                if not nmax and #v >= ARRAYMAX then evalerror("Max length of unbounded array exceeded") end
+                table.insert( v, 1, xv )
+            end
+        elseif e.name == "shift" then
+            if #e.args < 1 then evalerror("shift() missing required argument", e.pos) end
+            if e.args[1].__type ~= "vref" then evalerror("shift() argument 1 must be array name", e.pos) end
+            local nv = e.args[1].name
+            local av
+            if (ctx.__lvars or {})[nv] then
+                if base.type(ctx.__lvars[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                av = ctx.__lvars[nv]
+            elseif ctx[nv] then
+                if base.type(ctx[nv]) ~= "table" then evalerror("argument 1 is not array", e.pos) end
+                av = ctx[nv]
+            else
+                ctx.__lvars = ctx.__lvars or {}
+                av = {}
+                ctx.__lvars[nv] = av
+            end
+            v = table.remove( av, 1 ) or NULLATOM
         else
             -- Parse our arguments and put each on the stack; push them in reverse so they pop correctly (first to pop is first passed)
             local v1, argv
@@ -1634,8 +1639,7 @@ end
 
 -- Compile the expression (public method)
 function _M.compile( expressionString )
-    local s,v,n -- n???
-    s,v,_ = pcall(_comp, expressionString)
+    local s,v,_ = pcall(_comp, expressionString)
     if s then
         return  { rpn = v, source = expressionString }
     else
