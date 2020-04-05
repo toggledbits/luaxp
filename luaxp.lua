@@ -10,8 +10,8 @@
 
 local _M = {}
 
-_M._VERSION = "1.0.2"
-_M._VNUMBER = 10002
+_M._VERSION = "1.0.3"
+_M._VNUMBER = 10003
 _M._DEBUG = false -- Caller may set boolean true or function(msg)
 
 -- Binary operators and precedence (lower prec is higher precedence)
@@ -50,6 +50,7 @@ local base = _G
 local string = require("string")
 local math = require("math")
 local tostring = base.tostring
+local unpack = base.unpack or table.unpack
 
 local CONST = 'const'
 local VREF = 'vref'
@@ -151,12 +152,12 @@ local function evalerror(msg, loc)
 end
 
 local function xp_pow( argv )
-    local b,x = base.unpack( argv or {} )
+    local b,x = unpack( argv or {} )
     return b^x
 end
 
 local function xp_select( argv )
-    local obj,keyname,keyval = base.unpack( argv or {} )
+    local obj,keyname,keyval = unpack( argv or {} )
     if is_non(obj) then return NULLATOM end
     if base.type(obj) ~= "table" then evalerror("select() requires table/object arg 1") end
     keyname = base.tostring(keyname)
@@ -237,7 +238,7 @@ local function xp_parse_time( t )
             t = p[5] or "" -- advance token
         end
         -- We now have three components. Figure out their order.
-        p[5]=t p[6]=p[6]or"" D("p=%1,%2,%3,%4,%5", base.unpack(p))
+        p[5]=t p[6]=p[6]or"" D("p=%1,%2,%3,%4,%5", unpack(p))
         local first = base.tonumber(p[1]) or 0
         if order == nil and first > 31 then
             -- First is year (can't be month or day), assume y/m/d
@@ -463,7 +464,7 @@ local function xp_trim( s )
 end
 
 local function xp_keys( argv )
-    local arr = base.unpack( argv or {} )
+    local arr = unpack( argv or {} )
     if base.type( arr ) ~= "table" then evalerror("Array/table required") end
     local r = {}
     for k in base.pairs( arr ) do
@@ -498,7 +499,7 @@ local function xp_join( argv )
 end
 
 local function xp_indexof( args )
-    local arr, item, start = base.unpack( args )
+    local arr, item, start = unpack( args )
     start = start or 1
     if is_non( arr ) then return 0 end
     if base.type(arr) ~= "table" then evalerror("Array/table required") end
@@ -512,7 +513,7 @@ local function xp_indexof( args )
 end
 
 local function xp_replace( args )
-    local str, fpat, rpat = base.unpack( args )
+    local str, fpat, rpat = unpack( args )
     return string.gsub( tostring(str), tostring(fpat), tostring(rpat or "") )
 end
 
@@ -620,7 +621,7 @@ local nativeFuncs = {
     , ['sum' ] = { nargs = 1, impl = xp_sum }
     , ['count'] = { nargs = 1, impl = xp_count }
     , ['randomseed']   = { nargs = 0, impl = function( argv ) local s = argv[1] or os.time() math.randomseed(s) return s end }
-    , ['random']   = { nargs = 0, impl = function( argv ) return math.random( base.unpack(argv) ) end }
+    , ['random']   = { nargs = 0, impl = function( argv ) return math.random( unpack(argv) ) end }
     , ['len']   = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return 0 elseif base.type(argv[1]) == "table" then return xp_tlen(argv[1]) else return string.len(base.tostring(argv[1])) end end }
     , ['sub']   = { nargs = 2, impl = function( argv ) local st = base.tostring(argv[1]) local p = argv[2] local l = (argv[3] or -1) return string.sub(st, p, l) end }
     , ['find']  = { nargs = 2, impl = function( argv ) local st = base.tostring(argv[1]) local p = base.tostring(argv[2]) local i = argv[3] or 1 return (string.find(st, p, i) or 0) end }
@@ -632,14 +633,14 @@ local nativeFuncs = {
     , ['rtrim'] = { nargs = 1, impl = function( argv ) return xp_rtrim(base.tostring(argv[1])) end }
     , ['tostring'] = { nargs = 1, impl = function( argv ) if isNull(argv[1]) then return "" else return base.tostring(argv[1]) end end }
     , ['tonumber'] = { nargs = 1, impl = function( argv ) if base.type(argv[1]) == "boolean" then if argv[1] then return 1 else return 0 end end return base.tonumber(argv[1], argv[2] or 10) or evalerror('Argument could not be converted to number') end }
-    , ['format'] = { nargs = 1, impl = function( argv ) return string.format( base.unpack(argv) ) end }
+    , ['format'] = { nargs = 1, impl = function( argv ) return string.format( unpack(argv) ) end }
     , ['split'] = { nargs = 1, impl = xp_split }
     , ['join'] = { nargs = 1, impl = xp_join }
     , ['indexof'] = { nargs = 2, impl = xp_indexof }
     , ['time']  = { nargs = 0, impl = function( argv ) return xp_parse_time( argv[1] ) end }
     , ['timepart'] = { nargs = 0, impl = function( argv ) return os.date( argv[2] and "!*t" or "*t", (not isNull( argv[1] ) ) and argv[1] or nil ) end }
-    , ['date'] = { nargs = 0, impl = function( argv ) return xp_mktime(base.unpack(argv)) end }
-    , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(base.unpack(argv)) end }
+    , ['date'] = { nargs = 0, impl = function( argv ) return xp_mktime(unpack(argv)) end }
+    , ['strftime'] = { nargs = 1, impl = function( argv ) return os.date(unpack(argv)) end }
     , ['dateadd'] = { nargs = 2, impl = function( argv ) return xp_date_add( argv ) end }
     , ['datediff'] = { nargs = 1, impl = function( argv ) return xp_date_diff( argv[1], isNull( argv[2] ) and os.time or argv[2] ) end }
     , ['choose'] = { nargs = 2, impl = function( argv ) local ix = argv[1] if ix < 1 or ix > (#argv-2) then return argv[2] else return argv[ix+2] end end }
@@ -1351,7 +1352,9 @@ _run = function( atom, ctx, stack )
                 .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
             v = v1 >= v2
         elseif e.op == '==' then
-            if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
+			if isNull(v1) or isNull(v2) then
+				v = isNull(v1) and isNull(v2)
+			elseif base.type(v1) == "boolean" or base.type(v2) == "boolean" then
                 v = coerce(v1, "boolean") == coerce(v2, "boolean")
             elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
                 -- Either is number and both have valid numeric representation, treat both as numbers
@@ -1361,7 +1364,9 @@ _run = function( atom, ctx, stack )
                 v = coerce(v1, "string") == coerce(v2, "string")
             end
         elseif e.op == '<>' or e.op == '!=' or e.op == '~=' then
-            if base.type(v1) == "boolean" or base.type(v2) == "boolean" then
+            if isNull(v1) or isNull(v2) then
+				v = not ( isNull(v1) and isNull(v2) )
+			elseif base.type(v1) == "boolean" or base.type(v2) == "boolean" then
                 v = coerce(v1, "boolean") == coerce(v2, "boolean")
             elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
                 v = coerce(v1, "number") ~= coerce(v2, "number")
