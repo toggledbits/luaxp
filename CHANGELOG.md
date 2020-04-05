@@ -2,6 +2,12 @@
 
 DEPRECATION ANNOUNCEMENT: AS OF LUAXP 1.1, THE SEARCH FOR LOCAL VARIABLES AS TOP-LEVEL KEYS IN THE CONTEXT WILL BE REMOVED, AND ONLY THE `__lvars` KEY IN THE CONTEXT (WHICH IS ITSELF A TABLE) WILL BE USED.
 
+## 1.0.3
+
+* Support table/array syntax: `{ [val [, ... ] ] }` or `{ [key (=|:) val, [ ... ] ] }`. For example, `{5,10,15}` builds an array of three elements, while `{name: "Fred", home: "Bedrock"}` builds a table with two keys; note that keys must be constants: numeric or string literals only as of now. Future support for variables is possible.
+* Fix equality/inequality tests against `null`
+* Find Lua's `unpack()` (later Luas)
+
 ## 1.0.2
 
 * Add array manipulation functions `push( array, element [, maxelements] )`, `pop( array )`, `unshift( array, element [,maxelements] )`, `shift( array )`. The `push()` and `unshift()` functions add an element to the end or front of the array, respectively (i.e. `push()` appends, `unshift()` prepends); the array is modified in place, and is also returned as the function value. Therefore, the `array` argument may only be the name of an array, it cannot be an expression (e.g. `push( d, 1 )` is valid, while `push( list(), 1 )` is not). If the `maxelements` argument is given, the array size is limited to the provided value, with excess elements falling off the "far" end of the array. The `pop()` and `shift()` functions remove and return the last and first, respectively, elements from the array. They return `null` if the array is empty. The array used does not need to exist prior to use--if it does not exist, these functions will create it as an empty array before performing their respective operations. That is, assuming variable `d` does not exist, `push( d, 1 )` has the same effect as `d=list()` followed by `push( d, 1 )`. If the named `array` variable exists but is not an array, a runtime error occurs.

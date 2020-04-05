@@ -58,6 +58,7 @@ local FREF = 'fref'
 local UNOP = 'unop'
 local BINOP = 'binop'
 local TNUL = 'null'
+local TBL = 'tbl'
 
 local NULLATOM = { __type=TNUL }
 setmetatable( NULLATOM, { __tostring=function() return "null" end } )
@@ -934,6 +935,47 @@ local function scan_expr( expr, index )
     return index, nil -- Unexpected end of expression/unmatched paren group
 end
 
+local function scan_table( expr, index )
+	D("scan_table from %1 in %2", index, expr)
+	local key, val
+	local ax = 0
+	local rexpr = { __type=TBL, e={} }
+	index = skip_white( expr, index + 1 )
+	while index <= #expr do
+		local ch = string.sub(expr,index,index)
+		if ch == '}' or ch == ',' then
+			if val then
+				if key then
+					if isAtom( key, CONST ) then key = key.value end
+					table.insert( rexpr.e, { key=key, value=val } )
+					if type( key ) == "number" and key > 0 then ax = key end -- move ax with numeric key
+				else
+					ax = ax + 1
+					table.insert( rexpr.e, { key=ax, value=val } )
+				end
+			elseif ch == "," then comperror("Missing value", index)
+			end
+			-- On to next element
+			key = nil
+			val = nil
+			index = skip_white( expr, index + 1 )
+			if ch == '}' then break end
+		elseif ch == '{' then
+			index, val = scan_table( expr, index )
+		elseif ch == ':' or ch == "=" then
+			if not val then comperror("Missing key", index) end
+			-- For now, only allow constants for key. May allow other expressions (e.g. variable references) later.
+			if not ( val.__type == CONST ) then comperror("Key must be constant (integer or string literal)", index) end
+			key = val
+			val = nil
+			index = skip_white( expr, index + 1 )
+		else
+			index, val = scan_token( expr, index )
+		end
+	end
+	return index, rexpr
+end
+
 local function scan_unop( expr, index )
     D("scan_unop from %1 in %2", index, expr)
     local len = string.len(expr)
@@ -1002,6 +1044,9 @@ scan_token = function( expr, index )
     elseif ch == '(' then
         -- Nested expression
         return scan_expr( expr, index )
+	elseif ch == '{' then
+		-- Table
+		return scan_table( expr, index )
     elseif string.find("0123456789", ch, 1, true) ~= nil then
         -- Numeric token
         return scan_numeric( expr, index )
@@ -1218,6 +1263,15 @@ _run = function( atom, ctx, stack )
     elseif isAtom( e, CONST ) then
         D("_run: handling const %1", e.value)
         v = e.value
+	elseif isAtom( e, TBL ) then
+		D("_run: handling table")
+		v = {}
+		for _,ex in ipairs( e.e or {} ) do
+			D("_run: key is %1, val is %2", ex.key, ex.value)
+			local key = isAtom( ex.key ) and runfetch( ex.key, ctx, stack ) or ex.key
+			local val = runfetch( ex.value, ctx, stack )
+			v[key] = val
+		end
     elseif isAtom( e, BINOP ) then
         D("_run: handling BINOP %1", e.op)
         local v2
