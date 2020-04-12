@@ -61,7 +61,7 @@ local TNUL = 'null'
 local TBL = 'tbl'
 
 local NULLATOM = { __type=TNUL }
-setmetatable( NULLATOM, { __tostring=function() return "null" end } )
+setmetatable( NULLATOM, { __tostring=function() return "null" end, __index=function() error("Can't index null") end, __newindex=function() error("Can't index null") end } )
 
 local charmap = { t = "\t", r = "\r", n = "\n" }
 
@@ -142,14 +142,25 @@ end
 
 local function is_non( v ) return v == nil or isNull( v ) end
 
+local function _newerr(r)
+    r.__source = r.__source or "luaxp"
+    local m = getmetatable( r ) or {}
+    m.__tostring = function(t) return string.format("[%s]%s%s", t.__source,
+        t.message or "unspecified error",
+        t.location and ( " at " .. tostring(t.location) ) or "" ) end
+    m.__newindex = function() end -- silently fail, read-only structure
+    setmetatable( r, m )
+    return r
+end
+
 local function comperror(msg, loc)
     D("throwing comperror at %1: %2", loc, msg)
-    return base.error( { __source='luaxp', ['type']='compile', location=loc, message=msg } )
+    return base.error( _newerr{ ['type']='compile', location=loc, message=msg } )
 end
 
 local function evalerror(msg, loc)
     D("throwing evalerror at %1: %2", loc, msg)
-    return base.error( { __source='luaxp', ['type']='evaluation', location=loc, message=msg } )
+    return base.error( _newerr{ ['type']='evaluation', location=loc, message=msg } )
 end
 
 local function xp_pow( argv )
@@ -680,6 +691,21 @@ end
 
 -- Let's get to work
 
+-- Compile a subexpression; if error, adjust position for sub and rethrow
+local function comp_subexp( subexp, index )
+    local st, r = pcall( _comp, subexp )
+    if not st then
+        if r.message then
+            if r.location then r.location = r.location + index - 1 - string.len( subexp ) end
+            comperror( r.message, r.location )
+        else
+            error(r)
+        end
+    end
+    if r == nil then comperror("Failed to compile subexpression", index - 1) end
+    return r
+end
+
 -- Skips white space, returns index of non-space character or nil
 local function skip_white( expr, index )
     D("skip_white from %1 in %2", index, expr)
@@ -813,7 +839,7 @@ local function scan_fref( expr, index, name )
                 subexp = xp_trim( subexp )
                 D("scan_fref: handling end of argument list with subexp=%1", subexp)
                 if string.len(subexp) > 0 then -- PHR??? Need to test out all whitespace strings from the likes of "func( )"
-                    table.insert(args, _comp( subexp ) ) -- compile the subexp and put it on the list
+                    table.insert(args, comp_subexp( subexp, index ) ) -- compile the subexp and put it on the list
                 elseif #args > 0 then
                     comperror("Invalid subexpression", index)
                 end
@@ -834,8 +860,7 @@ local function scan_fref( expr, index, name )
             subexp = xp_trim( subexp )
             D("scan_fref: handling argument=%1", subexp)
             if string.len(subexp) > 0 then
-                local r = _comp(subexp)
-                if r == nil then return comperror("Subexpression failed to compile", index) end
+                local r = comp_subexp( subexp, index )
                 table.insert( args, r )
                 D("scan_fref: inserted argument %1 as %2", subexp, r)
             else
@@ -866,7 +891,7 @@ local function scan_aref( expr, index, name )
         if ch == ']' then
             if depth == 0 then
                 D("scan_aref: Found a closing bracket, subexp=%1", subexp)
-                local args = _comp(subexp)
+                local args = comp_subexp( subexp, index )
                 D("scan_aref returning, array is %1", name)
                 return index+1, { __type=VREF, name=name, index=args, pos=index }
             end
@@ -920,8 +945,7 @@ local function scan_expr( expr, index )
         if ch == ')' then
             if parenLevel == 0 then
                 D("scan_expr parsing subexpression=%1", st)
-                local r = _comp( st )
-                if r == nil then return comperror("Subexpression failed to parse", index) end
+                local r = comp_subexp( st, index )
                 return index+1, r -- pass as single-element sub-expression
             end
             parenLevel = parenLevel - 1
@@ -936,44 +960,44 @@ local function scan_expr( expr, index )
 end
 
 local function scan_table( expr, index )
-	D("scan_table from %1 in %2", index, expr)
-	local key, val
-	local ax = 0
-	local rexpr = { __type=TBL, e={} }
-	index = skip_white( expr, index + 1 )
-	while index <= #expr do
-		local ch = string.sub(expr,index,index)
-		if ch == '}' or ch == ',' then
-			if val then
-				if key then
-					if isAtom( key, CONST ) then key = key.value end
-					table.insert( rexpr.e, { key=key, value=val } )
-					if type( key ) == "number" and key > 0 then ax = key end -- move ax with numeric key
-				else
-					ax = ax + 1
-					table.insert( rexpr.e, { key=ax, value=val } )
-				end
-			elseif ch == "," then comperror("Missing value", index)
-			end
-			-- On to next element
-			key = nil
-			val = nil
-			index = skip_white( expr, index + 1 )
-			if ch == '}' then break end
-		elseif ch == '{' then
-			index, val = scan_table( expr, index )
-		elseif ch == ':' or ch == "=" then
-			if not val then comperror("Missing key", index) end
-			-- For now, only allow constants for key. May allow other expressions (e.g. variable references) later.
-			if not ( val.__type == CONST ) then comperror("Key must be constant (integer or string literal)", index) end
-			key = val
-			val = nil
-			index = skip_white( expr, index + 1 )
-		else
-			index, val = scan_token( expr, index )
-		end
-	end
-	return index, rexpr
+    D("scan_table from %1 in %2", index, expr)
+    local key, val
+    local ax = 0
+    local rexpr = { __type=TBL, e={} }
+    index = skip_white( expr, index + 1 )
+    while index <= #expr do
+        local ch = string.sub(expr,index,index)
+        if ch == '}' or ch == ',' then
+            if val then
+                if key then
+                    if isAtom( key, CONST ) then key = key.value end
+                    table.insert( rexpr.e, { key=key, value=val } )
+                    if type( key ) == "number" and key > 0 then ax = key end -- move ax with numeric key
+                else
+                    ax = ax + 1
+                    table.insert( rexpr.e, { key=ax, value=val } )
+                end
+            elseif ch == "," then comperror("Missing value", index)
+            end
+            -- On to next element
+            key = nil
+            val = nil
+            index = skip_white( expr, index + 1 )
+            if ch == '}' then break end
+        elseif ch == '{' then
+            index, val = scan_table( expr, index )
+        elseif ch == ':' or ch == "=" then
+            if not val then comperror("Missing key", index) end
+            -- For now, only allow constants for key. May allow other expressions (e.g. variable references) later.
+            if not ( val.__type == CONST ) then comperror("Key must be constant (integer or string literal)", index) end
+            key = val
+            val = nil
+            index = skip_white( expr, index + 1 )
+        else
+            index, val = scan_token( expr, index )
+        end
+    end
+    return index, rexpr
 end
 
 local function scan_unop( expr, index )
@@ -1016,7 +1040,7 @@ local function scan_binop( expr, index )
         if not matched then
             -- Didn't match anything. If we matched nothing on the first character, that's an error.
             -- Otherwise, op now contains the name of the longest-matching binop in the catalog.
-            if k == 1 then return comperror("Invalid operator", index) end
+            if k == 1 then return comperror("Invalid operator near `"..st.."'", index) end
             break
         end
 
@@ -1044,9 +1068,9 @@ scan_token = function( expr, index )
     elseif ch == '(' then
         -- Nested expression
         return scan_expr( expr, index )
-	elseif ch == '{' then
-		-- Table
-		return scan_table( expr, index )
+    elseif ch == '{' then
+        -- Table
+        return scan_table( expr, index )
     elseif string.find("0123456789", ch, 1, true) ~= nil then
         -- Numeric token
         return scan_numeric( expr, index )
@@ -1218,7 +1242,13 @@ local function fetch( stack, ctx )
             D("fetch: calling external resolver for %1", e.name)
             v = ctx.__functions.__resolve( e.name, ctx )
         end
-        if v == nil then evalerror("Undefined variable: " .. e.name, e.pos) end
+        if v == nil then
+            if getOption( ctx, "undefinedvarnull" ) then
+                v = NULLATOM
+            else
+                evalerror("Undefined variable: " .. e.name, e.pos)
+            end
+        end
         -- Apply array index if present
         if e.index ~= nil then
             if base.type(v) ~= "table" then evalerror(e.name .. " is not an array", e.pos) end
@@ -1263,15 +1293,15 @@ _run = function( atom, ctx, stack )
     elseif isAtom( e, CONST ) then
         D("_run: handling const %1", e.value)
         v = e.value
-	elseif isAtom( e, TBL ) then
-		D("_run: handling table")
-		v = {}
-		for _,ex in ipairs( e.e or {} ) do
-			D("_run: key is %1, val is %2", ex.key, ex.value)
-			local key = isAtom( ex.key ) and runfetch( ex.key, ctx, stack ) or ex.key
-			local val = runfetch( ex.value, ctx, stack )
-			v[key] = val
-		end
+    elseif isAtom( e, TBL ) then
+        D("_run: handling table")
+        v = {}
+        for _,ex in ipairs( e.e or {} ) do
+            D("_run: key is %1, val is %2", ex.key, ex.value)
+            local key = isAtom( ex.key ) and runfetch( ex.key, ctx, stack ) or ex.key
+            local val = runfetch( ex.value, ctx, stack )
+            v[key] = val
+        end
     elseif isAtom( e, BINOP ) then
         D("_run: handling BINOP %1", e.op)
         local v2
@@ -1314,7 +1344,7 @@ _run = function( atom, ctx, stack )
                 v = v1[v2.name]
                 if v2.index ~= nil then
                     -- Handle subscript in tree descent
-                    if v == nil then evalerror("Can't index null", v2.pos) end
+                    if is_non(v) then evalerror("Can't index null", v2.pos) end
                     local ix = runfetch(v2.index, ctx, stack)
                     if ix == nil then evalerror("Subscript evaluation failed for " .. v2.name, v2.pos) end
                     v = v[ix]
@@ -1406,9 +1436,9 @@ _run = function( atom, ctx, stack )
                 .. base.type(v1) .. e.op .. base.type(v2) .. ")", e.pos) end
             v = v1 >= v2
         elseif e.op == '==' then
-			if isNull(v1) or isNull(v2) then
-				v = isNull(v1) and isNull(v2)
-			elseif base.type(v1) == "boolean" or base.type(v2) == "boolean" then
+            if isNull(v1) or isNull(v2) then
+                v = isNull(v1) and isNull(v2)
+            elseif base.type(v1) == "boolean" or base.type(v2) == "boolean" then
                 v = coerce(v1, "boolean") == coerce(v2, "boolean")
             elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
                 -- Either is number and both have valid numeric representation, treat both as numbers
@@ -1419,8 +1449,8 @@ _run = function( atom, ctx, stack )
             end
         elseif e.op == '<>' or e.op == '!=' or e.op == '~=' then
             if isNull(v1) or isNull(v2) then
-				v = not ( isNull(v1) and isNull(v2) )
-			elseif base.type(v1) == "boolean" or base.type(v2) == "boolean" then
+                v = not ( isNull(v1) and isNull(v2) )
+            elseif base.type(v1) == "boolean" or base.type(v2) == "boolean" then
                 v = coerce(v1, "boolean") == coerce(v2, "boolean")
             elseif (base.type(v1) == "number" or base.type(v2) == "number") and isNumeric(v1) and isNumeric(v2) then
                 v = coerce(v1, "number") ~= coerce(v2, "number")
