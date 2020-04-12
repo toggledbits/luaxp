@@ -12,6 +12,8 @@ io.write("\n")
 ctx.__functions = {}
 ctx.__functions.whiz = function(argv) return string.rep("*",argv[1]) end
 
+-- ctx.__options = { undefinedvarnull=true }
+
 local function showErrorLocation( exprString, errStruct )
     if errStruct and errStruct.location then
         io.write(exprString)
