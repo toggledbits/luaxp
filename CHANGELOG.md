@@ -4,6 +4,9 @@ DEPRECATION ANNOUNCEMENT: AS OF LUAXP 1.1, THE SEARCH FOR LOCAL VARIABLES AS TOP
 
 ## 1.0.3
 
+* Errors thrown by LuaXP now have a metamethod for `tostring()` to format a standard appearance and simplify error access.
+* `null` now has a tighter metatable.
+* New `undefinedvarnull` option, when set, simply returns `null` for undefined variables rather than throwing an error (more forgiving/JS-like).
 * Support table/array syntax: `{ [val [, ... ] ] }` or `{ [key (=|:) val, [ ... ] ] }`. For example, `{5,10,15}` builds an array of three elements, while `{name: "Fred", home: "Bedrock"}` builds a table with two keys; note that keys must be constants: numeric or string literals only as of now. Future support for variables is possible.
 * Fix equality/inequality tests against `null`
 * Find Lua's `unpack()` (later Luas)
