@@ -457,7 +457,13 @@ local function doMiscFuncTests()
 	eval("shift(d)", "pencil")
 	eval("shift(d)", "globe")
 	eval("shift(d)", L.NULL)
-	
+	ctx.__lvars.er = 123
+	eval("push(er,4)", nil, "is not array")
+	eval("pop(er)", nil, "is not array")
+	eval("unshift(er,4)", nil, "is not array")
+	eval("shift(er)", nil, "is not array")
+	ctx.__lvars.er = nil
+
 	eval("d=list( 5, 6, 7, list( 1, 2, 3 ) )", nil, nil, "Setup for next test")
 	eval("len(d)", 4)
 	eval("#d", 4)

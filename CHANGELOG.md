@@ -4,6 +4,8 @@ DEPRECATION ANNOUNCEMENT: AS OF LUAXP 1.1, THE SEARCH FOR LOCAL VARIABLES AS TOP
 
 ## 1.0.3
 
+* `<<` and `>>` operators, bitwise shift left and shift right, respectively.
+* Improve detection of invalid array/null parameter in push/unshift/pop/shift set.
 * Errors thrown by LuaXP now have a metamethod for `tostring()` to format a standard appearance and simplify error access.
 * `null` now has a tighter metatable.
 * New `undefinedvarnull` option, when set, simply returns `null` for undefined variables rather than throwing an error (more forgiving/JS-like).
