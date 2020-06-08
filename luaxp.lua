@@ -605,6 +605,28 @@ local function xp_count( args )
     return tcount( args )
 end
 
+local function xp_slice( args )
+    local arr, index, howmany = unpack( args or {} )
+    local res = {}
+    if type( arr ) ~= "table" or isAtom( arr ) then evalerror("argument 1 is not array") end
+    index = tonumber( index ) or 1
+    if index == 0 then evalerror("argument 2 cannot be zero") end
+    if howmany == nil then howmany = #arr -- all
+    else
+        howmany = tonumber( howmany ) or evalerror("argument 3 must be numeric")
+    end
+    if howmany <= 0 then evalerror("argument 3 must be > 0") end
+    local st = (index > 0) and index or (#arr + index + 1)
+    en = math.min( #arr, st + howmany - 1 )
+    print(st,en)
+    if st <= #arr then
+        for k=st,en do
+            table.insert( res, arr[k] == nil and NULLATOM or arr[k] )
+        end
+    end
+    return res
+end
+
 local msgNNA1 = "Non-numeric argument 1"
 
 -- ??? All these tostrings() need to be coerce()
@@ -662,6 +684,7 @@ local nativeFuncs = {
     , ['keys'] = { nargs = 1, impl = xp_keys }
     , ['iterate'] = { nargs = 2, impl = true }
     , ['map'] = { nargs = 2, impl = true }
+    , ['slice'] = { nargs = 2, impl = xp_slice }
     , ['if'] = { nargs = 2, impl = true }
     , ['void'] = { nargs = 0, impl = function( _ ) return NULLATOM end }
     , ['list'] = { nargs = 0, impl = function( argv ) local b = deepcopy( argv ) b.__context=nil return b end }
@@ -1181,8 +1204,10 @@ local function coerce(val, typ)
             elseif string.lower(val) == "false" or val == "no" or val == "0" then return false
             else return #val ~= 0 -- empty string is false, all else is true
             end
-        elseif isNull(val) then return false -- null coerces to boolean false
+        elseif isNull(val) then
+            return false -- null coerces to boolean false
         end
+        return true -- everything else is true
     elseif typ == "string" then
         if vt == "number" then return base.tostring(val)
         elseif vt == "boolean" then return val and "true" or "false"

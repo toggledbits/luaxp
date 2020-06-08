@@ -4,6 +4,8 @@ DEPRECATION ANNOUNCEMENT: AS OF LUAXP 1.1, THE SEARCH FOR LOCAL VARIABLES AS TOP
 
 ## 1.0.3
 
+* Fix coersion to boolean so that coercion of array or other non-primitive type follows null (null=false, anything else=true).
+* `slice( array, startIndex [, howMany ] )` returns the part of an array from the `startIndex` to the end, or up to the number of elements specified in `howMany`. If `startIndex` is negative, the slice starts from the end of the array. The result is an array of the sliced elements; the source array is unmodified.
 * `<<` and `>>` operators, bitwise shift left and shift right, respectively.
 * Improve detection of invalid array/null parameter in push/unshift/pop/shift set.
 * Errors thrown by LuaXP now have a metamethod for `tostring()` to format a standard appearance and simplify error access.
