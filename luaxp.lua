@@ -40,6 +40,7 @@ _M.binops = {
     , { op='and', prec=11 }
     , { op='||', prec=12 }
     , { op='or', prec=12 }
+    , { op='??', prec=13 }
     , { op='=',  prec=14 }
 }
 
@@ -1332,7 +1333,7 @@ _run = function( atom, ctx, stack )
     elseif isAtom( e, BINOP ) then
         D("_run: handling BINOP %1", e.op)
         local v2
-        if e.op == 'and' or e.op == '&&' or e.op == 'or' or e.op == '||' then
+        if e.op == 'and' or e.op == '&&' or e.op == 'or' or e.op == '||' or e.op == '??' then
             v2 = e.rexpr
             D("_run: logical lookahead is %1", v2)
         elseif e.op == '.' then
@@ -1403,6 +1404,14 @@ _run = function( atom, ctx, stack )
             else
                 D("_run: shortcut or/|| op1 is true")
                 v = v1 -- shortcut lead exp is true (in "a or b", no need to eval b if a is true)
+            end
+        elseif e.op == '??' then
+            if is_non( v1 ) then -- undefined or null
+                D("_run: op1 for ?? null/undefined, evaluate op2=%1", v2)
+                v = runfetch( v2, ctx, stack )
+            else
+                D("_run: shortcut ?? is null/undefined")
+                v = v1
             end
         elseif e.op == '..' then
             -- String concatenation, explicit coercion to string for operands.
