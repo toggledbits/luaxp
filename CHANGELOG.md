@@ -2,6 +2,10 @@
 
 DEPRECATION ANNOUNCEMENT: AS OF LUAXP 1.1, THE SEARCH FOR LOCAL VARIABLES AS TOP-LEVEL KEYS IN THE CONTEXT WILL BE REMOVED, AND ONLY THE `__lvars` KEY IN THE CONTEXT (WHICH IS ITSELF A TABLE) WILL BE USED.
 
+## 1.0.4
+ 
+* The `??` (coalesce) operator (from Multi-System Reactor and C#, for example) is now available. If the left operand is non-null, it is the expression result; otherwise the right operand is the expression result.
+
 ## 1.0.3
 
 * Fix coersion to boolean so that coercion of array or other non-primitive type follows null (null=false, anything else=true).
